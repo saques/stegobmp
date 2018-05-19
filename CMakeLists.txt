@@ -5,7 +5,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(SOURCE_FILES main.cpp)
 add_executable(stegobmp ${SOURCE_FILES})
+add_subdirectory(cxxopts)
 
 find_package(OpenSSL REQUIRED)
-include_directories(${OPENSSL_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES})
+include_directories(${OPENSSL_INCLUDE_DIR} ${CXXOPTS_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES} cxxopts)
