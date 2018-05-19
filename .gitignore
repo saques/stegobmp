@@ -1,5 +1,12 @@
 .idea/
 cmake-build-debug/
+CMakeBuilds/
+build/
+.vs/
+.vscode/
+cmake_install.cmake
+CMakeSettings.json
+CppProperties.json
 
 # Prerequisites
 *.d
