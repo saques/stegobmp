@@ -1,0 +1,13 @@
+Compilacion en Windows.
+
+clonar el repositorio -> git clone https://github.com/saques/stegobmp.git
+iniciar los submodulos -> git submodule init
+actualizar los submodulos -> git submodule update
+instalar openssl 1.1.0 -> https://slproweb.com/products/Win32OpenSSL.html
+instalar cmake -> https://cmake.org/download/
+instalar visual studio community 2017 -> https://www.visualstudio.com/downloads/?rr=https%3A%2F%2Fwww.google.com.ar%2F
+crear un nuevo projecto de cmake -> File->Open->CMake y elegir el CMakeLists.txt del proyecto
+compilar y ejecutar-> Boton de debug-> elegir stegobmp.exe
+editar los includePaths del archivo CppProperties para que ande bien el Intellisense
+aclaracion-> como la version del openssl que usamos es 64 bits, no podemos realizar builds de 32 bits.
+si es necesario, hay que instalar openssl de 32 bits.
