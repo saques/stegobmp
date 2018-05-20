@@ -5,28 +5,30 @@
 #include <openssl/evp.h>
 #include <cxxopts.hpp>
 #include <easylogging++.h>
+#include "ArgumentList.h"
 
 INITIALIZE_EASYLOGGINGPP
 
-int main() 
+int stegobmp(Config::ArgumentList& opts)
 {
-    cxxopts::Options options("My program", "hello");
-    bool compile = false;
+	bool valid;
+	auto err = opts.OptionsAreValid(valid);
+	if (!valid) {
+		std::cout << err << std::endl;
+		return EXIT_SUCCESS;
+	}
 
-    LOG(INFO) << "HELLO WORLD!!!";
-    options.add_options()
-    ("f,file", "File", cxxopts::value<std::string>())
-    ("c,compile", "Compile", cxxopts::value(compile));
+	return EXIT_SUCCESS;
+}
 
-    const char * data = "hace mucho calor hoy";
-    MD5_CTX origen;
-
-    MD5_Init(&origen);
-    auto md = static_cast<unsigned char *>(malloc (MD5_DIGEST_LENGTH));
-    MD5_Update(&origen, data, strlen(data));
-    MD5_Final(md, &origen);
-    std::cout << md << std::endl;
-    free (md);
-    std::cout << "hello world" << std::endl;
-    return EXIT_SUCCESS;
+int main(int argc, char*argv[]) 
+{
+	try {
+		Config::ArgumentList opts(argc, argv);
+		return stegobmp(opts);
+	}
+	catch (cxxopts::OptionException& ex) {
+		std::cout << ex.what() << std::endl;
+		return EXIT_FAILURE;
+	}
 }
