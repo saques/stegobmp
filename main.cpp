@@ -27,6 +27,12 @@ int main(int argc, char*argv[])
 
     structures::BMP bmp ("../images/land1.bmp");
 
+    for(int x = 0; x < 100 ; ++x){
+    	for(int y = 0; y < 100; ++y){
+    		bmp.write(x, y, 0xFF);
+    	}
+    }
+
     bmp.save("other1.bmp");
 
     /*
