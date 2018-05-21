@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_subdirectory(cxxopts)
 add_subdirectory(easyloggingpp)
-set(SOURCE_FILES main.cpp easyloggingpp/src/easylogging++.cc)
+set(SOURCE_FILES main.cpp easyloggingpp/src/easylogging++.cc BMP.h)
 add_executable(stegobmp ${SOURCE_FILES})
 
 find_package(OpenSSL REQUIRED)
