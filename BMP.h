@@ -67,6 +67,11 @@ namespace structures {
             metadata = new uint8_t[fileh.bfOffBits - sizeof(BITMAPFILEHEADER) - sizeof(BITMAPINFOHEADER)];
             file.read((char *) metadata, fileh.bfOffBits - sizeof(BITMAPFILEHEADER) - sizeof(BITMAPINFOHEADER));
 
+
+            if(infoh.biSizeImage == 0){
+                infoh.biSizeImage = (infoh.biBitCount/8)*infoh.biWidth*infoh.biHeight;
+            }
+
             data = new uint8_t[infoh.biSizeImage];
             file.read((char *) (data), infoh.biSizeImage);
 
@@ -105,8 +110,8 @@ namespace structures {
             }
             uint32_t idx = index(x, y);
 
-            for (int i = 0; i < infoh.biBitCount / 8; i++, d = d >> (uint8_t) 8) {
-                data[idx + i] = (uint8_t) ((uint64_t) 0x00FF & d);
+            for (int i = infoh.biBitCount/8 - 1; i >= 0 ; i--, d = d >> (uint8_t)8) {
+                data[idx + i] = (uint8_t) (((uint64_t)0x00FF) & d);
             }
 
         }
@@ -124,7 +129,7 @@ namespace structures {
             }
             uint64_t ans = 0;
             uint32_t idx = index(x, y);
-            for (int i = 0; i < infoh.biBitCount / 8; i++) {
+            for (int i = 0; i < infoh.biBitCount/8; i++) {
                 ans |= data[idx+i];
                 if(i < infoh.biBitCount/8 - 1)
                     ans = ans << (uint8_t)8;

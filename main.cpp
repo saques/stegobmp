@@ -27,11 +27,17 @@ int main(int argc, char*argv[])
 
     structures::BMP bmp ("../images/land1.bmp");
 
-    for(int x = 0; x < 100 ; ++x){
-    	for(int y = 0; y < 100; ++y){
-    		bmp.write(x, y, 0xFF);
+    /**
+     * An example: altering the least significant bit every 10 pixels.
+     */
+
+    for(int x = 0; x < 1024 ; x+=10){
+    	for(int y = 0; y < 768; y+=10){
+    		uint64_t p = bmp.read(x,y);
+    		bmp.write(x, y, p^1);
     	}
     }
+
 
     bmp.save("other1.bmp");
 
