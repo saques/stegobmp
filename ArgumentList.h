@@ -49,13 +49,13 @@ namespace Config
 				val += "Falta --out <archivo de salida>.\n";
 			}
 			if (steg != "LSB1" && steg != "LSB4" && steg != "LSBE") {
-				val += "Falta --steg <LSB1|LSB4|LSBE>";
+				val += "Falta --steg <LSB1|LSB4|LSBE>. \n";
 			}
 			if (a != "des" && a != "aes128" && a != "aes192" && a != "aes256") {
-				val += "Falta -a <des|aes128|aes192|aes256>";
+				val += "Falta -a <des|aes128|aes192|aes256>. \n";
 			}
 			if (m != "ecb" && m != "cfb" && m != "ofb" && m != "cbc") {
-				val += "Falta -m <ecb|cfb|ofb|cbc>";
+				val += "Falta -m <ecb|cfb|ofb|cbc>.\n";
 			}
 			if (!val.empty()) {
 				return val;
