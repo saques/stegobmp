@@ -1,5 +1,6 @@
 #pragma once
 #include <cxxopts.hpp>
+#include "StegoEnums.h"
 
 namespace Config 
 {
@@ -14,10 +15,10 @@ namespace Config
 				("h,help", "Mostrar commandos.", cxxopts::value(help))
 				("p", "Archivo bmp que sera el portador", cxxopts::value<std::string>(carrierFilePath)->default_value(""))
 				("out", "Archivo de salida", cxxopts::value<std::string>(outFilePath)->default_value(""))
-				("steg", "Algoritmo de esteganografiado", cxxopts::value<std::string>(steg)->default_value("LSB1"))
+				("steg", "Algoritmo de esteganografiado", cxxopts::value<StegoAlgorithms>(steg)->default_value("LSB1"))
 				("in", "El archivo de entrada", cxxopts::value<std::string>(inFilePath)->default_value(""))
-				("a", "Algoritmo de cifrado", cxxopts::value<std::string>(a)->default_value("des"))
-				("m", "Cifrado en bloque", cxxopts::value<std::string>(m)->default_value("ecb"))
+				("a", "Algoritmo de cifrado", cxxopts::value<StegoCypher>(cypher)->default_value("des"))
+				("m", "Cifrado en bloque", cxxopts::value<StegoBlock>(block)->default_value("ecb"))
 				("pass", "Password de encriptacion", cxxopts::value<std::string>());
 				
 			options.custom_help("[--embed|--extract] [OPTION...] ");
@@ -48,13 +49,13 @@ namespace Config
 			if (outFilePath.empty() && embed) {
 				val += "Falta --out <archivo de salida>.\n";
 			}
-			if (steg != "LSB1" && steg != "LSB4" && steg != "LSBE") {
+			if (steg == StegoAlgorithms::UNDEFINED) {
 				val += "Falta --steg <LSB1|LSB4|LSBE>. \n";
 			}
-			if (a != "des" && a != "aes128" && a != "aes192" && a != "aes256") {
+			if (cypher == StegoCypher::UNDEFINED ) {
 				val += "Falta -a <des|aes128|aes192|aes256>. \n";
 			}
-			if (m != "ecb" && m != "cfb" && m != "ofb" && m != "cbc") {
+			if (block == StegoBlock::UNDEFINED) {
 				val += "Falta -m <ecb|cfb|ofb|cbc>.\n";
 			}
 			if (!val.empty()) {
@@ -66,14 +67,34 @@ namespace Config
 			}
 		}
 		
+		const std::string& GetInFilePath() 
+		{
+			return inFilePath;
+		}
+
+		const StegoAlgorithms& GetStego() 
+		{
+			return steg;
+		}
+
+		const StegoCypher& GetCypher()
+		{
+			return cypher;
+		}
+
+		const StegoBlock& GetBlock()
+		{
+			return block;
+		}
+
 	private:
 		cxxopts::Options options;
 		std::string inFilePath;
 		std::string outFilePath;
 		std::string carrierFilePath;
-		std::string steg;
-		std::string a;
-		std::string m;
+		StegoAlgorithms steg;
+		StegoCypher cypher;
+		StegoBlock block;
 		std::string password;
 		bool embed;
 		bool extract;
