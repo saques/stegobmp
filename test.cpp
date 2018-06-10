@@ -34,7 +34,59 @@ TEST(ArgumentList, ArgumentsWorkProperly) {
 
 	TestParam("-m", "ecb", Config::StegoBlock::ECB, &Config::ArgumentList::GetBlock);
 	TestParam("-m", "cbc", Config::StegoBlock::CBC, &Config::ArgumentList::GetBlock);
+
+	TestParam("--pass", "holamundo", std::string("holamundo"), &Config::ArgumentList::GetPassword);
 }
+
+void TestAreOptionsValid(std::vector<char *> args, bool expected)
+{
+	auto opts = SetUpArgcArgv(args);
+	bool valid;
+	opts.OptionsAreValid(valid);
+	EXPECT_EQ(valid, expected);
+}
+
+std::vector<char*> ConcatVectors(const std::vector<char*> &vect1, const std::vector<char*> &vect2)
+{
+	std::vector<char*> ret(vect1);
+	ret.insert(ret.end(), vect2.begin(), vect2.end());
+	return ret;
+}
+
+TEST(ArgumentList, AreOptionsValid) {
+
+	std::vector<char *> defaultArgs {
+		"test",
+		"--embed",
+		"--in",
+		"test.txt",
+		"-p",
+		"test.txt",
+		"--out",
+		"test.txt",
+		"--steg",
+		"LSB1",
+	};
+	TestAreOptionsValid(ConcatVectors(defaultArgs, std::vector<char*> {
+		"--pass", 
+		"hello world"
+	}), true);
+	TestAreOptionsValid(ConcatVectors(defaultArgs, std::vector<char*> {
+	}), true);
+	TestAreOptionsValid(ConcatVectors(defaultArgs, std::vector<char*> {
+		"-a",
+		"aes128"
+	}), false);
+	TestAreOptionsValid(ConcatVectors(defaultArgs, std::vector<char*> {
+		"--pass",
+		"hello wolrd"
+		"-a",
+		"aes256",
+		"-m",
+		"cfb"
+	}), true);
+}
+
 
 void TestCipher(std::string message, std::string password, const EVP_CIPHER * cypher)
 {
