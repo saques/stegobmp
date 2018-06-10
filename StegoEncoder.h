@@ -35,35 +35,39 @@ namespace Crypto {
 			//	Initialize EVP Cypher context
 			EVP_CIPHER_CTX * ctx = EVP_CIPHER_CTX_new();
 
-			//	Derive a MD5 key from the user given password
-			unsigned char key[16];
-			DeriveKey(password, key);
+			//	Derive a key and iv from the user given password
+			std::unique_ptr<uint8_t[]> key, iv;
+			DeriveKey(encFunction, password, key, iv);
 
 			//	Start cyphering
-			//	Should add an IV? If so, add a new parameter?
-			EVP_CipherInit(ctx, encFunction, key, nullptr, mode);
+			EVP_CipherInit(ctx, encFunction, key.get(), iv.get(), mode);
 
 			// Cypher in MAX_CYPHERTEXT_SIZE chunks, complete cyphered message in output
-			char inputBlock[MAX_CYPHERTEXT_SIZE];
-			unsigned char outputBlock[MAX_CYPHERTEXT_SIZE];
+			char inputBlock[MAX_CYPHERTEXT_SIZE], outputBlock[MAX_CYPHERTEXT_SIZE];
 			int outl;
 			std::string output;
 			while (!input.eof()) {
 				int read = input.read(inputBlock, MAX_CYPHERTEXT_SIZE).gcount();
-				EVP_CipherUpdate(ctx, outputBlock, &outl, reinterpret_cast<unsigned char *>(inputBlock), read);
-				output.append(reinterpret_cast<const char *>(outputBlock), static_cast<size_t>(outl));
+				EVP_CipherUpdate(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl, reinterpret_cast<unsigned char *>(inputBlock), read);
+				output.append(outputBlock, static_cast<size_t>(outl));
 			}
-			EVP_CipherFinal(ctx, outputBlock, &outl);
-			output.append(reinterpret_cast<const char *>(outputBlock), static_cast<size_t>(outl));
+			EVP_CipherFinal(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl);
+			output.append(outputBlock, static_cast<size_t>(outl));
 			// Dont forget to free cypher context
 			EVP_CIPHER_CTX_free(ctx);
 			return output;
 		}
 
 	private:
-		void DeriveKey(std::string password, unsigned char key[16])
+		void DeriveKey(const EVP_CIPHER * encFunction, std::string password, std::unique_ptr<uint8_t[]> &key, std::unique_ptr<uint8_t[]> &iv)
 		{
-			key = MD5(reinterpret_cast<const unsigned char *>(password.c_str()), password.size(), key);
+			// count -> what iteration count should we use?
+			int keyLength = EVP_CIPHER_key_length(encFunction);
+			int ivLength = EVP_CIPHER_iv_length(encFunction);
+			key = std::unique_ptr<uint8_t[]>(new uint8_t[keyLength]);
+			iv = std::unique_ptr<uint8_t[]>(new uint8_t[ivLength]);
+			// We use count = 1, the default
+			EVP_BytesToKey(encFunction, EVP_md5(), nullptr, reinterpret_cast<const uint8_t*>(password.data()), password.size(), 1, key.get(), iv.get());
 		}
 
 
