@@ -2,22 +2,22 @@
 #include <fstream>
 
 namespace Config {
-	enum class StegoAlgorithms { LSB1, LSB4, LSBE, UNDEFINED };
+	enum class StegoInsertion { LSB1, LSB4, LSBE, UNDEFINED };
 
-	std::istream& operator>>(std::istream& stream, StegoAlgorithms& algorithm) {
+	std::istream& operator>>(std::istream& stream, StegoInsertion& algorithm) {
 		std::string str;
 		stream >> str;
 		if (str == "LSB1") {
-			algorithm = StegoAlgorithms::LSB1;
+			algorithm = StegoInsertion::LSB1;
 		}
 		else if (str == "LSB4") {
-			algorithm = StegoAlgorithms::LSB4;
+			algorithm = StegoInsertion::LSB4;
 		}
 		else if (str == "LSBE") {
-			algorithm = StegoAlgorithms::LSBE;
+			algorithm = StegoInsertion::LSBE;
 		}
 		else {
-			algorithm = StegoAlgorithms::UNDEFINED;
+			algorithm = StegoInsertion::UNDEFINED;
 		}
 		return stream;
 	}

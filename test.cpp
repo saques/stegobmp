@@ -2,7 +2,7 @@
 #include "ArgumentList.h"
 #include "StegoEnums.h"
 #include <functional>
-
+#include "StegoEncoder.h"
 
 static Config::ArgumentList SetUpArgcArgv(std::vector<char *> args)
 {
@@ -24,9 +24,9 @@ void TestParam(char * commandLineOption, char * arg, T stego, const T &(Config::
 }
 
 TEST(ArgumentList, ArgumentsWorkProperly) {
-	TestParam("--steg", "LSB1", Config::StegoAlgorithms::LSB1, &Config::ArgumentList::GetStego);
-	TestParam("--steg", "LSB4", Config::StegoAlgorithms::LSB4, &Config::ArgumentList::GetStego);
-	TestParam("--steg", "asfdas", Config::StegoAlgorithms::UNDEFINED, &Config::ArgumentList::GetStego);
+	TestParam("--steg", "LSB1", Config::StegoInsertion::LSB1, &Config::ArgumentList::GetStego);
+	TestParam("--steg", "LSB4", Config::StegoInsertion::LSB4, &Config::ArgumentList::GetStego);
+	TestParam("--steg", "asfdas", Config::StegoInsertion::UNDEFINED, &Config::ArgumentList::GetStego);
 	
 	TestParam("-a", "aes128", Config::StegoCypher::AES128, &Config::ArgumentList::GetCypher);
 	TestParam("-a", "aes192", Config::StegoCypher::AES192, &Config::ArgumentList::GetCypher);
@@ -34,6 +34,14 @@ TEST(ArgumentList, ArgumentsWorkProperly) {
 
 	TestParam("-m", "ecb", Config::StegoBlock::ECB, &Config::ArgumentList::GetBlock);
 	TestParam("-m", "cbc", Config::StegoBlock::CBC, &Config::ArgumentList::GetBlock);
+}
+
+TEST(StegoEncoder, TestingEncoding)	{
+	Crypto::Encoder encoder;
+	auto options = SetUpArgcArgv(std::vector<char*> {"test", "--pass", "holamundo", "--in", "simpletext.txt"});
+	auto cypher = encoder.Encode(options);
+	auto options2 = SetUpArgcArgv(std::vector<char*> {"test", "--pass", "holamundo", "--in", "simpletextenc.txt"});
+	auto plain = encoder.Decode(options2);
 }
 
 int main(int argc, char* argv[])

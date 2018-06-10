@@ -15,7 +15,7 @@ namespace Config
 				("h,help", "Mostrar commandos.", cxxopts::value(help))
 				("p", "Archivo bmp que sera el portador", cxxopts::value<std::string>(carrierFilePath)->default_value(""))
 				("out", "Archivo de salida", cxxopts::value<std::string>(outFilePath)->default_value(""))
-				("steg", "Algoritmo de esteganografiado", cxxopts::value<StegoAlgorithms>(steg)->default_value("LSB1"))
+				("steg", "Algoritmo de esteganografiado", cxxopts::value<StegoInsertion>(steg)->default_value("LSB1"))
 				("in", "El archivo de entrada", cxxopts::value<std::string>(inFilePath)->default_value(""))
 				("a", "Algoritmo de cifrado", cxxopts::value<StegoCypher>(cypher)->default_value("des"))
 				("m", "Cifrado en bloque", cxxopts::value<StegoBlock>(block)->default_value("ecb"))
@@ -49,7 +49,7 @@ namespace Config
 			if (outFilePath.empty() && embed) {
 				val += "Falta --out <archivo de salida>.\n";
 			}
-			if (steg == StegoAlgorithms::UNDEFINED) {
+			if (steg == StegoInsertion::UNDEFINED) {
 				val += "Falta --steg <LSB1|LSB4|LSBE>. \n";
 			}
 			if (cypher == StegoCypher::UNDEFINED ) {
@@ -72,7 +72,7 @@ namespace Config
 			return inFilePath;
 		}
 
-		const StegoAlgorithms& GetStego() 
+		const StegoInsertion& GetStego() 
 		{
 			return steg;
 		}
@@ -87,12 +87,27 @@ namespace Config
 			return block;
 		}
 
+		const std::string& GetOutFilePath()
+		{
+			return outFilePath;
+		}
+
+		const std::string& GetCarrierFilePath()
+		{
+			return carrierFilePath;
+		}
+
+		const std::string& GetPassword()
+		{
+			return password;
+		}
+
 	private:
 		cxxopts::Options options;
 		std::string inFilePath;
 		std::string outFilePath;
 		std::string carrierFilePath;
-		StegoAlgorithms steg;
+		StegoInsertion steg;
 		StegoCypher cypher;
 		StegoBlock block;
 		std::string password;
