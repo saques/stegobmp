@@ -1,13 +1,16 @@
 #pragma once
 
-#define BITMAPHEADER_SIZE 54
 #include <cstdlib>
 #include <iostream>
 #include <cstdint>
 #include <string>
 #include <iostream>
 
-namespace structures {
+namespace Structures {
+
+    enum InsertionMode{
+        LSB1, LSB4, LSBE
+    };
 
     #pragma pack(push, 1)
     typedef struct tagBITMAPFILEHEADER {
@@ -17,7 +20,6 @@ namespace structures {
         uint16_t bfReserved2;  //reserved; must be 0
         uint32_t bfOffBits;  //species the offset in bytes from the bitmapfileheader to the bitmap bits
     } BITMAPFILEHEADER ;
-
     typedef struct tagBITMAPINFOHEADER {
         uint32_t biSize;  //specifies the number of bytes required by the struct
         uint32_t biWidth;  //specifies width in pixels
@@ -87,11 +89,11 @@ namespace structures {
             delete data;
         }
 
-        BITMAPFILEHEADER &fileHeader() {
+        BITMAPFILEHEADER &FileHeader() {
             return fileh;
         }
 
-        BITMAPINFOHEADER &infoHeader() {
+        BITMAPINFOHEADER &InfoHeader() {
             return infoh;
         }
 
@@ -105,12 +107,12 @@ namespace structures {
          * @param y
          * @param data
          */
-        void write(uint32_t x, uint32_t y, uint64_t d) {
+        void Write(uint32_t x, uint32_t y, uint64_t d) {
 
-            if (outOfBounds(x, y))
+            if (OutOfBounds(x, y))
                 throw std::out_of_range("BMP index out of range");
 
-            uint32_t idx = index(x, y);
+            uint32_t idx = Index(x, y);
 
             for (int i = infoh.biBitCount/8 - 1; i >= 0 ; i--, d = d >> (uint8_t)8) {
                 data[idx + i] = (uint8_t) (((uint64_t)0x00FF) & d);
@@ -124,10 +126,106 @@ namespace structures {
          * @param d
          * @param d
          */
-        void write(uint32_t p, uint8_t d){
-            if (outOfBounds(p))
+        void Write(uint32_t p, uint8_t d){
+            if (OutOfBounds(p))
                 throw std::out_of_range("BMP underlying index our of range");
             data[p] = d;
+        }
+
+        /**
+         * Embeds in the BMP data, according to a specified
+         * insertion mode.
+         * @param data
+         * @param mode
+         */
+        void Write(std::vector<uint8_t> &data, InsertionMode mode){
+            std::vector<uint8_t>::iterator it = data.begin();
+            uint32_t idx = 0;
+            switch (mode){
+                case LSB1:
+                    if(LSB1OutOfSize(data.size()))
+                        throw std::out_of_range("Origin data bigger than available size");
+
+                    for( ; it != data.end(); it++ , idx += 8){
+                        uint8_t b = *it;
+                        for(uint8_t delta = 0; delta < 8; delta++) {
+                            this->data[idx + delta] ^= ((uint8_t)0x01&(b>>(7-delta)));
+                        }
+                    };
+                    break;
+
+                case LSB4:
+                    if(LSB4OutOfSize(data.size()))
+                        throw std::out_of_range("Origin data bigger than available size");
+
+                    for( ; it != data.end(); it++ , idx += 2){
+                        uint8_t b = *it;
+                        for(uint8_t delta = 0; delta < 2; delta++) {
+                            this->data[idx + delta] ^= ((uint8_t)0x0F&(b>>((1-delta)*4)));
+                        }
+                    };
+                    break;
+
+                case LSBE:
+                    //TODO: Read paper
+                    break;
+                default:
+                    throw std::invalid_argument("Illegal insertion mode");
+            }
+        }
+
+        static std::vector<uint8_t> Diff(BMP& original, BMP& altered, InsertionMode mode){
+
+            if(original.absoluteSize != altered.absoluteSize)
+                throw std::invalid_argument("Images of different size");
+
+            std::vector<uint8_t> ans;
+            bool finish = false;
+
+            switch (mode){
+                case LSB1:
+
+                    for(uint32_t p = 0; !finish && p < original.absoluteSize; p+=8){
+                        uint8_t b = 0;
+                        finish = true;
+                        for(uint8_t delta = 0; delta < 8; delta++){
+                            uint8_t diff;
+                            if((diff = original.data[p+delta] ^ altered.data[p+delta]) != 0){
+                                finish = false;
+                                b |= (uint8_t)(diff&(uint8_t)0x01)<<(uint8_t)(7-delta);
+                            }
+                        }
+                        if(!finish)
+                            ans.push_back(b);
+                    }
+
+                    break;
+
+                case LSB4:
+
+                    for(uint32_t p = 0; !finish && p < original.absoluteSize; p+=2){
+                        uint8_t b = 0;
+                        finish = true;
+                        for(uint8_t delta = 0; delta < 2; delta++){
+                            uint8_t diff;
+                            if((diff = original.data[p+delta] ^ altered.data[p+delta]) != 0){
+                                finish = false;
+                                b |= (uint8_t)(diff&(uint8_t)0x0F)<<(uint8_t)((1-delta)*4);
+                            }
+                        }
+                        if(!finish)
+                            ans.push_back(b);
+                    }
+
+                    break;
+
+                case LSBE:
+                    //TODO: Read paper
+                    break;
+                default:
+                    throw std::invalid_argument("Illegal insertion mode");
+            }
+            return ans;
         }
 
         /**
@@ -137,12 +235,12 @@ namespace structures {
          * @param y
          * @return
          */
-        uint64_t read(uint32_t x, uint32_t y){
-            if (outOfBounds(x, y))
+        uint64_t Read(uint32_t x, uint32_t y){
+            if (OutOfBounds(x, y))
                 throw std::out_of_range("BMP index out of range");
 
             uint64_t ans = 0;
-            uint32_t idx = index(x, y);
+            uint32_t idx = Index(x, y);
             for (int i = 0; i < infoh.biBitCount/8; i++) {
                 ans |= data[idx+i];
                 if(i < infoh.biBitCount/8 - 1)
@@ -151,19 +249,24 @@ namespace structures {
             return ans;
         }
 
+
         /**
          * Reads a pixel from the underlying array of bytes.
          * @param p
          * @return
          */
-        uint8_t read(uint32_t p){
-            if (outOfBounds(p))
+        uint8_t Read(uint32_t p){
+            if (OutOfBounds(p))
                 throw std::out_of_range("BMP underlying index our of range");
             return data[p];
         }
 
 
-        void save(const std::string & path){
+        uint64_t AbsoluteSize(){
+            return absoluteSize;
+        }
+
+        void Save(const std::string &path){
             std::ofstream file (path, std::ios::binary);
             file.write((char *)&fileh, sizeof(BITMAPFILEHEADER));
             file.write((char *)&infoh, sizeof(BITMAPINFOHEADER));
@@ -174,15 +277,24 @@ namespace structures {
 
     private:
 
-        bool outOfBounds(uint32_t x, uint32_t y){
+        bool LSB1OutOfSize(uint64_t bytes){
+            return bytes*8 > absoluteSize;
+        }
+
+        bool LSB4OutOfSize(uint64_t bytes){
+            return bytes*2 > absoluteSize;
+        }
+
+
+        bool OutOfBounds(uint32_t x, uint32_t y){
             return x < 0 || y < 0 || x >= infoh.biWidth || y >= infoh.biHeight;
         }
 
-        bool outOfBounds(uint32_t p){
+        bool OutOfBounds(uint32_t p){
             return p < 0 || p >= absoluteSize;
         }
 
-        uint32_t index(uint32_t x, uint32_t y){
+        uint32_t Index(uint32_t x, uint32_t y){
             x += y*padding;
             return infoh.biSizeImage - (infoh.biWidth*(1+y)-x-1)*infoh.biBitCount/8-infoh.biBitCount/8;
         }

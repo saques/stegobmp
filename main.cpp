@@ -24,21 +24,23 @@ int stegobmp(Config::ArgumentList& opts)
 
 int main(int argc, char*argv[])
 {	
-    structures::BMP bmp ("../images/secreto1.bmp");
-    /**
-     * An example: altering the least significant bit every 10 pixels.
-     */
+    Structures::BMP original ("../images/secreto1.bmp");
+	Structures::BMP altered ("../images/secreto1.bmp");
+
+	std::string str = "Mauricio Macri la puta que te pario";
+	std::vector<uint8_t> data(str.begin(), str.end());
+
+	altered.Write(data, Structures::LSB4);
+
+	std::vector<uint8_t> diff = Structures::BMP::Diff(original, altered, Structures::LSB4);
+
+	for(std::vector<uint8_t>::iterator it = diff.begin(); it != diff.end(); it++){
+		std::cout << (char)*it;
+	}
+
+	std::cout << std::endl;
 
 
-    for(int x = 0; x < 100 ; x++){
-    	for(int y = 0; y < 100; y++){
-    		uint64_t p = bmp.read(x,y);
-    		bmp.write(x, y, 0xFFFFFF);
-    	}
-    }
-
-
-    bmp.save("other1.bmp");
 
     /*
 	std::cout << "hfasdfasdsdf!" << std::endl;
