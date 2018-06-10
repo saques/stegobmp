@@ -36,12 +36,23 @@ TEST(ArgumentList, ArgumentsWorkProperly) {
 	TestParam("-m", "cbc", Config::StegoBlock::CBC, &Config::ArgumentList::GetBlock);
 }
 
-TEST(StegoEncoder, TestingEncoding)	{
+void TestCipher(std::string message, std::string password, const EVP_CIPHER * cypher)
+{
 	Crypto::Encoder encoder;
-	auto options = SetUpArgcArgv(std::vector<char*> {"test", "--pass", "holamundo", "--in", "simpletext.txt"});
-	auto cypher = encoder.Encode(options);
-	auto options2 = SetUpArgcArgv(std::vector<char*> {"test", "--pass", "holamundo", "--in", "simpletextenc.txt"});
-	auto plain = encoder.Decode(options2);
+
+	// encrypt
+	auto cypherText = encoder.Cypher(std::stringstream(message), password, cypher, 1);
+	// decrypt
+	auto plainText = encoder.Cypher(std::stringstream(cypherText), password, cypher, 0);
+	EXPECT_EQ(message, plainText);
+
+}
+
+TEST(StegoEncoder, TestingEncoding)	{
+	TestCipher("hola mundo", "1234", EVP_aes_128_cbc());
+	TestCipher("a", "contrasenia muy larga 12318319823u912838129381239128391283129831298319281123125134523452345345", EVP_aes_128_cfb());
+	TestCipher("mensaje largoaskldfjas;lkdfj;laskjdf;lksajdf;lksajdf;lksajd;fkljaskldfj;lkasjdf;lk", "1", EVP_aes_256_ofb());
+	TestCipher("hola mundo", "1234", EVP_des_cbc());
 }
 
 int main(int argc, char* argv[])

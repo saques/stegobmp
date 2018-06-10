@@ -1,7 +1,8 @@
 #pragma once
 #include <cxxopts.hpp>
+#include <openssl/evp.h>
 #include "StegoEnums.h"
-
+#include <functional>
 namespace Config 
 {
 	class ArgumentList {
@@ -18,7 +19,7 @@ namespace Config
 				("steg", "Algoritmo de esteganografiado", cxxopts::value<StegoInsertion>(steg)->default_value("LSB1"))
 				("in", "El archivo de entrada", cxxopts::value<std::string>(inFilePath)->default_value(""))
 				("a", "Algoritmo de cifrado", cxxopts::value<StegoCypher>(cypher)->default_value("des"))
-				("m", "Cifrado en bloque", cxxopts::value<StegoBlock>(block)->default_value("ecb"))
+				("m", "Cifrado en bloque", cxxopts::value<StegoBlock>(block)->default_value("cbc"))
 				("pass", "Password de encriptacion", cxxopts::value<std::string>());
 				
 			options.custom_help("[--embed|--extract] [OPTION...] ");
@@ -100,6 +101,75 @@ namespace Config
 		const std::string& GetPassword()
 		{
 			return password;
+		}
+
+		const const EVP_CIPHER* GetEncryptionFunction()
+		{
+			switch (cypher) 
+			{
+			case StegoCypher::AES128: 
+				switch (block)
+				{
+				case StegoBlock::CBC:
+					return EVP_aes_128_cbc();
+				case StegoBlock::CFB:
+					return EVP_aes_128_cfb();
+				case StegoBlock::ECB:
+					return EVP_aes_128_ecb();
+				case StegoBlock::OFB:
+					return EVP_aes_128_ofb();
+				default:
+					throw std::invalid_argument("InvalidArgument: no block mode provided.");
+				}
+			case StegoCypher::AES192: 
+				switch (block)
+				{
+				case StegoBlock::CBC:
+					return EVP_aes_192_cbc();
+				case StegoBlock::CFB:
+					return EVP_aes_192_cfb();
+				case StegoBlock::ECB:
+					return EVP_aes_192_ecb();
+				case StegoBlock::OFB:
+					return EVP_aes_192_ofb();
+				default:
+					throw std::invalid_argument("InvalidArgument: no block mode provided.");
+				}
+
+			case StegoCypher::AES256: 
+				switch (block)
+				{
+				case StegoBlock::CBC:
+					return EVP_aes_256_cbc();
+				case StegoBlock::CFB:
+					return EVP_aes_256_cfb();
+				case StegoBlock::ECB:
+					return EVP_aes_256_ecb();
+				case StegoBlock::OFB:
+					return EVP_aes_256_ofb();
+				default:
+					throw std::invalid_argument("InvalidArgument: no block mode provided.");
+				}
+
+			case StegoCypher::DES: 
+				switch (block)
+				{
+				case StegoBlock::CBC:
+					return EVP_des_cbc();
+				case StegoBlock::CFB:
+					return EVP_des_cfb();
+				case StegoBlock::ECB:
+					return EVP_des_ecb();
+				case StegoBlock::OFB:
+					return EVP_des_ofb();
+				default:
+					throw std::invalid_argument("InvalidArgument: no block mode provided.");
+				}
+			default: 
+			{
+				throw std::invalid_argument("InvalidArgument: no encryption algorithm provided.");
+			}
+			}
 		}
 
 	private:
