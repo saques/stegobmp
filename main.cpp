@@ -30,15 +30,17 @@ int main(int argc, char*argv[])
 	std::string str = "Mauricio Macri la puta que te pario";
 	std::vector<uint8_t> data(str.begin(), str.end());
 
-	altered.Write(data, Structures::LSB4);
+	altered.Write(data, Config::StegoInsertion::LSB4);
 
-	std::vector<uint8_t> diff = Structures::BMP::Diff(original, altered, Structures::LSB4);
+	std::vector<uint8_t> diff = Structures::BMP::Diff(original, altered, Config::StegoInsertion::LSB4);
 
 	for(std::vector<uint8_t>::iterator it = diff.begin(); it != diff.end(); it++){
 		std::cout << (char)*it;
 	}
 
 	std::cout << std::endl;
+
+	altered.Save("altered.bmp");
 
 
 

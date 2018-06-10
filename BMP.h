@@ -8,10 +8,6 @@
 
 namespace Structures {
 
-    enum InsertionMode{
-        LSB1, LSB4, LSBE
-    };
-
     #pragma pack(push, 1)
     typedef struct tagBITMAPFILEHEADER {
         uint16_t bfType;  //specifies the file type
@@ -138,11 +134,11 @@ namespace Structures {
          * @param data
          * @param mode
          */
-        void Write(std::vector<uint8_t> &data, InsertionMode mode){
+        void Write(std::vector<uint8_t> &data, Config::StegoInsertion mode){
             std::vector<uint8_t>::iterator it = data.begin();
             uint32_t idx = 0;
             switch (mode){
-                case LSB1:
+                case Config::StegoInsertion::LSB1:
                     if(LSB1OutOfSize(data.size()))
                         throw std::out_of_range("Origin data bigger than available size");
 
@@ -154,7 +150,7 @@ namespace Structures {
                     };
                     break;
 
-                case LSB4:
+                case Config::StegoInsertion::LSB4:
                     if(LSB4OutOfSize(data.size()))
                         throw std::out_of_range("Origin data bigger than available size");
 
@@ -166,7 +162,7 @@ namespace Structures {
                     };
                     break;
 
-                case LSBE:
+                case Config::StegoInsertion::LSBE:
                     //TODO: Read paper
                     break;
                 default:
@@ -174,7 +170,7 @@ namespace Structures {
             }
         }
 
-        static std::vector<uint8_t> Diff(BMP& original, BMP& altered, InsertionMode mode){
+        static std::vector<uint8_t> Diff(BMP& original, BMP& altered, Config::StegoInsertion mode){
 
             if(original.absoluteSize != altered.absoluteSize)
                 throw std::invalid_argument("Images of different size");
@@ -183,7 +179,7 @@ namespace Structures {
             bool finish = false;
 
             switch (mode){
-                case LSB1:
+                case Config::StegoInsertion::LSB1:
 
                     for(uint32_t p = 0; !finish && p < original.absoluteSize; p+=8){
                         uint8_t b = 0;
@@ -201,7 +197,7 @@ namespace Structures {
 
                     break;
 
-                case LSB4:
+                case Config::StegoInsertion::LSB4:
 
                     for(uint32_t p = 0; !finish && p < original.absoluteSize; p+=2){
                         uint8_t b = 0;
@@ -219,7 +215,7 @@ namespace Structures {
 
                     break;
 
-                case LSBE:
+                case Config::StegoInsertion::LSBE:
                     //TODO: Read paper
                     break;
                 default:
