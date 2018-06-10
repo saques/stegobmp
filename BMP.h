@@ -42,13 +42,14 @@ namespace structures {
         BITMAPINFOHEADER infoh;
         uint8_t *metadata;
         uint8_t *data;
+        uint8_t padding;
+        uint64_t absoluteSize;
 
     public:
 
         BMP(const std::string &path) {
 
             std::ifstream file(path, std::ios::binary);
-
 
             if (!file.is_open())
                 throw std::invalid_argument("No such file");
@@ -72,11 +73,12 @@ namespace structures {
                 infoh.biSizeImage = (infoh.biBitCount/8)*infoh.biWidth*infoh.biHeight;
             }
 
-            data = new uint8_t[infoh.biSizeImage];
-            file.read((char *) (data), infoh.biSizeImage);
+            padding = (uint8_t)(infoh.biWidth*(infoh.biBitCount/8)%4);
+            absoluteSize = infoh.biSizeImage + padding*infoh.biHeight;
 
+            data = new uint8_t[absoluteSize];
+            file.read((char *) (data), absoluteSize);
             file.close();
-
 
         }
 
@@ -105,15 +107,27 @@ namespace structures {
          */
         void write(uint32_t x, uint32_t y, uint64_t d) {
 
-            if (outOfBounds(x, y)) {
+            if (outOfBounds(x, y))
                 throw std::out_of_range("BMP index out of range");
-            }
+
             uint32_t idx = index(x, y);
 
             for (int i = infoh.biBitCount/8 - 1; i >= 0 ; i--, d = d >> (uint8_t)8) {
                 data[idx + i] = (uint8_t) (((uint64_t)0x00FF) & d);
             }
 
+        }
+
+        /**
+         * Writes data to the underlying array of bytes,
+         * without skipping padding.
+         * @param d
+         * @param d
+         */
+        void write(uint32_t p, uint8_t d){
+            if (outOfBounds(p))
+                throw std::out_of_range("BMP underlying index our of range");
+            data[p] = d;
         }
 
         /**
@@ -124,9 +138,9 @@ namespace structures {
          * @return
          */
         uint64_t read(uint32_t x, uint32_t y){
-            if (outOfBounds(x, y)) {
+            if (outOfBounds(x, y))
                 throw std::out_of_range("BMP index out of range");
-            }
+
             uint64_t ans = 0;
             uint32_t idx = index(x, y);
             for (int i = 0; i < infoh.biBitCount/8; i++) {
@@ -137,27 +151,39 @@ namespace structures {
             return ans;
         }
 
+        /**
+         * Reads a pixel from the underlying array of bytes.
+         * @param p
+         * @return
+         */
+        uint8_t read(uint32_t p){
+            if (outOfBounds(p))
+                throw std::out_of_range("BMP underlying index our of range");
+            return data[p];
+        }
+
 
         void save(const std::string & path){
-
             std::ofstream file (path, std::ios::binary);
-
             file.write((char *)&fileh, sizeof(BITMAPFILEHEADER));
             file.write((char *)&infoh, sizeof(BITMAPINFOHEADER));
             file.write((char *)metadata, fileh.bfOffBits-sizeof(BITMAPFILEHEADER)-sizeof(BITMAPINFOHEADER));
             file.write((char *)data, infoh.biSizeImage);
-
             file.close();
-
         }
 
     private:
 
         bool outOfBounds(uint32_t x, uint32_t y){
-            return x < 0 || y < 0 || x > infoh.biWidth || y > infoh.biHeight;
+            return x < 0 || y < 0 || x >= infoh.biWidth || y >= infoh.biHeight;
+        }
+
+        bool outOfBounds(uint32_t p){
+            return p < 0 || p >= absoluteSize;
         }
 
         uint32_t index(uint32_t x, uint32_t y){
+            x += y*padding;
             return infoh.biSizeImage - (infoh.biWidth*(1+y)-x-1)*infoh.biBitCount/8-infoh.biBitCount/8;
         }
 
