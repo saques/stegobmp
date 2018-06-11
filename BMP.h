@@ -31,6 +31,8 @@ namespace Structures {
     } BITMAPINFOHEADER;
     #pragma pack(pop)
 
+    #define HEADERS_SIZE (sizeof(BITMAPFILEHEADER)+sizeof(BITMAPINFOHEADER))
+
 
     class BMP {
 
@@ -38,8 +40,10 @@ namespace Structures {
 
         BITMAPFILEHEADER fileh;
         BITMAPINFOHEADER infoh;
-        uint8_t *metadata;
-        uint8_t *data;
+
+        std::unique_ptr<uint8_t *> metadata;
+        std::unique_ptr<uint8_t *> data;
+
         uint8_t padding;
         uint64_t absoluteSize;
 
@@ -63,9 +67,9 @@ namespace Structures {
 
 
             //TODO: See if this data is relevant
-            metadata = new uint8_t[fileh.bfOffBits - sizeof(BITMAPFILEHEADER) - sizeof(BITMAPINFOHEADER)];
-            file.read((char *) metadata, fileh.bfOffBits - sizeof(BITMAPFILEHEADER) - sizeof(BITMAPINFOHEADER));
-
+            uint64_t metadataSize = fileh.bfOffBits - HEADERS_SIZE;
+            metadata = std::make_unique<uint8_t *>(new uint8_t[metadataSize]);
+            file.read((char *) *metadata, metadataSize);
 
             if(infoh.biSizeImage == 0){
                 infoh.biSizeImage = (infoh.biBitCount/8)*infoh.biWidth*infoh.biHeight;
@@ -74,15 +78,10 @@ namespace Structures {
             padding = (uint8_t)(infoh.biWidth*(infoh.biBitCount/8)%4);
             absoluteSize = infoh.biSizeImage + padding*infoh.biHeight;
 
-            data = new uint8_t[absoluteSize];
-            file.read((char *) (data), absoluteSize);
+            data = std::make_unique<uint8_t *>(new uint8_t[absoluteSize]);
+            file.read((char *) *data, absoluteSize);
             file.close();
 
-        }
-
-        ~BMP() {
-            delete metadata;
-            delete data;
         }
 
         BITMAPFILEHEADER &FileHeader() {
@@ -111,7 +110,7 @@ namespace Structures {
             uint32_t idx = Index(x, y);
 
             for (int i = infoh.biBitCount/8 - 1; i >= 0 ; i--, d = d >> (uint8_t)8) {
-                data[idx + i] = (uint8_t) (((uint64_t)0x00FF) & d);
+                (*data)[idx + i] = (uint8_t) (((uint64_t)0x00FF) & d);
             }
 
         }
@@ -125,7 +124,7 @@ namespace Structures {
         void Write(uint32_t p, uint8_t d){
             if (OutOfBounds(p))
                 throw std::out_of_range("BMP underlying index our of range");
-            data[p] = d;
+            (*data)[p] = d;
         }
 
         /**
@@ -145,7 +144,7 @@ namespace Structures {
                     for( ; it != data.end(); it++ , idx += 8){
                         uint8_t b = *it;
                         for(uint8_t delta = 0; delta < 8; delta++) {
-                            this->data[idx + delta] ^= ((uint8_t)0x01&(b>>(7-delta)));
+                            (*this->data)[idx + delta] ^= ((uint8_t)0x01&(b>>(7-delta)));
                         }
                     };
                     break;
@@ -157,7 +156,7 @@ namespace Structures {
                     for( ; it != data.end(); it++ , idx += 2){
                         uint8_t b = *it;
                         for(uint8_t delta = 0; delta < 2; delta++) {
-                            this->data[idx + delta] ^= ((uint8_t)0x0F&(b>>((1-delta)*4)));
+                            (*this->data)[idx + delta] ^= ((uint8_t)0x0F&(b>>((1-delta)*4)));
                         }
                     };
                     break;
@@ -186,7 +185,7 @@ namespace Structures {
                         finish = true;
                         for(uint8_t delta = 0; delta < 8; delta++){
                             uint8_t diff;
-                            if((diff = original.data[p+delta] ^ altered.data[p+delta]) != 0){
+                            if((diff = (*original.data)[p+delta] ^ (*altered.data)[p+delta]) != 0){
                                 finish = false;
                                 b |= (uint8_t)(diff&(uint8_t)0x01)<<(uint8_t)(7-delta);
                             }
@@ -204,7 +203,7 @@ namespace Structures {
                         finish = true;
                         for(uint8_t delta = 0; delta < 2; delta++){
                             uint8_t diff;
-                            if((diff = original.data[p+delta] ^ altered.data[p+delta]) != 0){
+                            if((diff = (*original.data)[p+delta] ^ (*altered.data)[p+delta]) != 0){
                                 finish = false;
                                 b |= (uint8_t)(diff&(uint8_t)0x0F)<<(uint8_t)((1-delta)*4);
                             }
@@ -238,7 +237,7 @@ namespace Structures {
             uint64_t ans = 0;
             uint32_t idx = Index(x, y);
             for (int i = 0; i < infoh.biBitCount/8; i++) {
-                ans |= data[idx+i];
+                ans |= (*data)[idx+i];
                 if(i < infoh.biBitCount/8 - 1)
                     ans = ans << (uint8_t)8;
             }
@@ -254,7 +253,7 @@ namespace Structures {
         uint8_t Read(uint32_t p){
             if (OutOfBounds(p))
                 throw std::out_of_range("BMP underlying index our of range");
-            return data[p];
+            return (*data)[p];
         }
 
 
@@ -266,8 +265,8 @@ namespace Structures {
             std::ofstream file (path, std::ios::binary);
             file.write((char *)&fileh, sizeof(BITMAPFILEHEADER));
             file.write((char *)&infoh, sizeof(BITMAPINFOHEADER));
-            file.write((char *)metadata, fileh.bfOffBits-sizeof(BITMAPFILEHEADER)-sizeof(BITMAPINFOHEADER));
-            file.write((char *)data, infoh.biSizeImage);
+            file.write((char *) *metadata, fileh.bfOffBits-sizeof(BITMAPFILEHEADER)-sizeof(BITMAPINFOHEADER));
+            file.write((char *) *data, infoh.biSizeImage);
             file.close();
         }
 

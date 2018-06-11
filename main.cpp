@@ -24,17 +24,17 @@ int stegobmp(Config::ArgumentList& opts)
 
 int main(int argc, char*argv[])
 {	
-    Structures::BMP original ("../images/secreto1.bmp");
-	Structures::BMP altered ("../images/secreto1.bmp");
+    Structures::BMP original ("../images/lima.bmp");
+	Structures::BMP altered ("../images/lima.bmp");
 
 	std::string str = "Mauricio Macri la puta que te pario";
 	std::vector<uint8_t> data(str.begin(), str.end());
 
-	altered.Write(data, Config::StegoInsertion::LSB4);
+	altered.Write(data, Config::StegoInsertion::LSB1);
 
-	std::vector<uint8_t> diff = Structures::BMP::Diff(original, altered, Config::StegoInsertion::LSB4);
+	std::vector<uint8_t> diff = Structures::BMP::Diff(original, altered, Config::StegoInsertion::LSB1);
 
-	for(std::vector<uint8_t>::iterator it = diff.begin(); it != diff.end(); it++){
+	for(auto it = diff.begin(); it != diff.end(); it++){
 		std::cout << (char)*it;
 	}
 
