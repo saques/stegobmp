@@ -111,7 +111,7 @@ namespace Config
 			return password;
 		}
 
-		const const EVP_CIPHER* GetEncryptionFunction()
+		const EVP_CIPHER* GetEncryptionFunction()
 		{
 			switch (cypher) 
 			{

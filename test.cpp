@@ -93,9 +93,11 @@ void TestCipher(std::string message, std::string password, const EVP_CIPHER * cy
 	Crypto::Encoder encoder;
 
 	// encrypt
-	auto cypherText = encoder.Cypher(std::stringstream(message), password, cypher, 1);
+	std::istringstream messageStream(message);
+	auto cypherText = encoder.Cypher(messageStream, password, cypher, 1);
 	// decrypt
-	auto plainText = encoder.Cypher(std::stringstream(cypherText), password, cypher, 0);
+	std::istringstream cypherStream(cypherText);
+	auto plainText = encoder.Cypher(cypherStream, password, cypher, 0);
 	EXPECT_EQ(message, plainText);
 
 }

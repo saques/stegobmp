@@ -47,8 +47,8 @@ namespace Crypto {
 			int outl;
 			std::string output;
 			while (!input.eof()) {
-				int read = input.read(inputBlock, MAX_CYPHERTEXT_SIZE).gcount();
-				EVP_CipherUpdate(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl, reinterpret_cast<unsigned char *>(inputBlock), read);
+				auto read = input.read(inputBlock, MAX_CYPHERTEXT_SIZE).gcount();
+				EVP_CipherUpdate(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl, reinterpret_cast<unsigned char *>(inputBlock), static_cast<int>(read));
 				output.append(outputBlock, static_cast<size_t>(outl));
 			}
 			EVP_CipherFinal(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl);
@@ -67,7 +67,7 @@ namespace Crypto {
 			key = std::unique_ptr<uint8_t[]>(new uint8_t[keyLength]);
 			iv = std::unique_ptr<uint8_t[]>(new uint8_t[ivLength]);
 			// We use count = 1, the default
-			EVP_BytesToKey(encFunction, EVP_md5(), nullptr, reinterpret_cast<const uint8_t*>(password.data()), password.size(), 1, key.get(), iv.get());
+			EVP_BytesToKey(encFunction, EVP_md5(), nullptr, reinterpret_cast<const uint8_t*>(password.data()), static_cast<int>(password.size()), 1, key.get(), iv.get());
 		}
 
 
