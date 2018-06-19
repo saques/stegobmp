@@ -24,15 +24,18 @@ int stegobmp(Config::ArgumentList& opts)
 
 int main(int argc, char*argv[])
 {	
-    Structures::BMP original ("../images/lima.bmp");
-	Structures::BMP altered ("../images/lima.bmp");
 
-	std::string str = "Mauricio Macri la puta que te pario";
+	Structures::BMP file ("../images/lado.bmp");
+
+
+	std::string str = "Tam fortis, tamen tam stupidus! Utinam habeas cerebrum simile tuae fortitudini.";
 	std::vector<uint8_t> data(str.begin(), str.end());
 
-	altered.Write(data, Config::StegoInsertion::LSB1);
+	file.Write(data, Config::StegoInsertion::LSB1);
 
-	std::vector<uint8_t> diff = Structures::BMP::Diff(original, altered, Config::StegoInsertion::LSB1);
+
+	auto diff = file.Read(Config::StegoInsertion::LSB1);
+
 
 	for(auto it = diff.begin(); it != diff.end(); it++){
 		std::cout << (char)*it;
@@ -40,8 +43,9 @@ int main(int argc, char*argv[])
 
 	std::cout << std::endl;
 
-	altered.Save("altered.bmp");
-
+	std::ofstream  output_file("example.txt");
+	std::ostream_iterator<std::uint8_t> output_iterator(output_file);
+	std::copy(diff.begin(), diff.end(), output_iterator);
 
 
     /*

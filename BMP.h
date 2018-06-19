@@ -133,32 +133,43 @@ namespace Structures {
          * @param data
          * @param mode
          */
-        void Write(std::vector<uint8_t> &data, Config::StegoInsertion mode){
-            std::vector<uint8_t>::iterator it = data.begin();
-            uint32_t idx = 0;
+        void Write(std::vector<uint8_t> &d, Config::StegoInsertion mode){
+
+            uint32_t p = 0;
+            uint8_t bpb;
+            uint64_t size = d.size();
+            uint8_t b = 0;
+
+
             switch (mode){
                 case Config::StegoInsertion::LSB1:
-                    if(LSB1OutOfSize(data.size()))
+                    if(LSB1OutOfSize(d.size()))
                         throw std::out_of_range("Origin data bigger than available size");
 
-                    for( ; it != data.end(); it++ , idx += 8){
-                        uint8_t b = *it;
-                        for(uint8_t delta = 0; delta < 8; delta++) {
-                            (*this->data)[idx + delta] ^= ((uint8_t)0x01&(b>>(7-delta)));
-                        }
-                    };
-                    break;
+                    bpb = 1;
+
+                    goto LSB1_LSB4;
 
                 case Config::StegoInsertion::LSB4:
-                    if(LSB4OutOfSize(data.size()))
+                    if(LSB4OutOfSize(d.size()))
                         throw std::out_of_range("Origin data bigger than available size");
 
-                    for( ; it != data.end(); it++ , idx += 2){
-                        uint8_t b = *it;
-                        for(uint8_t delta = 0; delta < 2; delta++) {
-                            (*this->data)[idx + delta] ^= ((uint8_t)0x0F&(b>>((1-delta)*4)));
-                        }
-                    };
+                    bpb = 4;
+
+                LSB1_LSB4:
+
+                    //Write size
+                    for(; p<4; p++){
+                        PutByte(data, p, bpb, (uint8_t)(size>>((3-p)*8)));
+                    }
+
+                    //Write contents
+
+                    for(auto it = d.begin(); it != d.end(); it++)
+                        PutByte(data, p++, bpb, *it);
+
+                    //TODO: Write extension
+
                     break;
 
                 case Config::StegoInsertion::LSBE:
@@ -169,47 +180,37 @@ namespace Structures {
             }
         }
 
-        static std::vector<uint8_t> Diff(BMP& original, BMP& altered, Config::StegoInsertion mode){
-
-            if(original.absoluteSize != altered.absoluteSize)
-                throw std::invalid_argument("Images of different size");
+        std::vector<uint8_t> Read(Config::StegoInsertion mode){
 
             std::vector<uint8_t> ans;
-            bool finish = false;
+
+            uint32_t p = 0;
+            uint8_t bpb;
+            uint64_t size = 0;
+            uint8_t b = 0;
 
             switch (mode){
-                case Config::StegoInsertion::LSB1:
 
-                    for(uint32_t p = 0; !finish && p < original.absoluteSize; p+=8){
-                        uint8_t b = 0;
-                        finish = true;
-                        for(uint8_t delta = 0; delta < 8; delta++){
-                            uint8_t diff;
-                            if((diff = (*original.data)[p+delta] ^ (*altered.data)[p+delta]) != 0){
-                                finish = false;
-                                b |= (uint8_t)(diff&(uint8_t)0x01)<<(uint8_t)(7-delta);
-                            }
-                        }
-                        if(!finish)
-                            ans.push_back(b);
+                case Config::StegoInsertion::LSB1:
+                    bpb = 1;
+                    goto LSB1_LSB4;
+                case Config::StegoInsertion::LSB4:
+                    bpb = 4;
+
+                LSB1_LSB4:
+
+                    //Read size
+                    for(; p<4; p++){
+                        size |= (GetByte(data, p, bpb))<<(3-p)*8;
                     }
 
-                    break;
+                    //Read contents
+                    for( ; p < size + 4; p++)
+                        ans.push_back(GetByte(data, p, bpb));
 
-                case Config::StegoInsertion::LSB4:
-
-                    for(uint32_t p = 0; !finish && p < original.absoluteSize; p+=2){
-                        uint8_t b = 0;
-                        finish = true;
-                        for(uint8_t delta = 0; delta < 2; delta++){
-                            uint8_t diff;
-                            if((diff = (*original.data)[p+delta] ^ (*altered.data)[p+delta]) != 0){
-                                finish = false;
-                                b |= (uint8_t)(diff&(uint8_t)0x0F)<<(uint8_t)((1-delta)*4);
-                            }
-                        }
-                        if(!finish)
-                            ans.push_back(b);
+                    //Read extension
+                    for( ; (b = GetByte(data, p, bpb)) != 0; p++) {
+                        //ans.push_back(b);
                     }
 
                     break;
@@ -220,6 +221,7 @@ namespace Structures {
                 default:
                     throw std::invalid_argument("Illegal insertion mode");
             }
+
             return ans;
         }
 
@@ -271,6 +273,48 @@ namespace Structures {
         }
 
     private:
+
+
+        static uint8_t GetByte(const std::unique_ptr<uint8_t *> & data, uint32_t p, uint8_t bpB){
+            if(bpB > 8 || bpB == 0)
+                throw std::invalid_argument("A byte can at most store 8 bits and at least 1 bit");
+
+            uint8_t ans = 0, mask = ~((uint8_t)((uint8_t)0xFF<<bpB));
+
+
+            uint32_t off = ((uint8_t )8/bpB);
+            p *= off;
+
+            for(uint32_t delta = 0; delta < off; delta++)
+                ans |= (uint8_t )((*data)[p+delta]&mask)<<(off-1-delta)*bpB;
+
+            return ans;
+        }
+
+
+        static void PutByte(const std::unique_ptr<uint8_t *> & data, uint32_t p, uint8_t bpB, uint8_t payload){
+            if(bpB > 8 || bpB == 0)
+                throw std::invalid_argument("A byte can at most store 8 bits and at least 1 bit");
+
+            uint8_t mask = ((uint8_t)0xFF<<bpB);
+
+            uint32_t off = ((uint8_t )8/bpB);
+            p *= off;
+
+
+            for(uint32_t delta = 0; delta < off; delta++) {
+
+                (*data)[p + delta] = (uint8_t )((*data)[p + delta] & mask) |
+                                     (uint8_t )(mask | (uint8_t) (payload >> (off - 1 - delta) * bpB));
+
+
+
+            }
+
+
+
+        }
+
 
         bool LSB1OutOfSize(uint64_t bytes){
             return bytes*8 > absoluteSize;
