@@ -296,16 +296,15 @@ namespace Structures {
             if(bpB > 8 || bpB == 0)
                 throw std::invalid_argument("A byte can at most store 8 bits and at least 1 bit");
 
-            uint8_t mask = ((uint8_t)0xFF<<bpB);
+            uint8_t hiMask = ((uint8_t)0xFF<<bpB), loMask = ~hiMask;
 
             uint32_t off = ((uint8_t )8/bpB);
             p *= off;
 
-
             for(uint32_t delta = 0; delta < off; delta++) {
 
-                (*data)[p + delta] = (uint8_t )((*data)[p + delta] & mask) |
-                                     (uint8_t )(mask | (uint8_t) (payload >> (off - 1 - delta) * bpB));
+                (*data)[p + delta] = (uint8_t )((*data)[p + delta] & hiMask) |
+                                     (uint8_t )((uint8_t )(payload >> (off - 1 - delta) * bpB) & loMask);
 
 
 
