@@ -24,19 +24,31 @@ int stegobmp(Config::ArgumentList& opts)
 
 int main(int argc, char*argv[])
 {	
-    structures::BMP bmp ("./images/land1.bmp");
-    /**
-     * An example: altering the least significant bit every 10 pixels.
-     */
 
-    for(int x = 0; x < 1024 ; x+=10){
-    	for(int y = 0; y < 768; y+=10){
-    		uint64_t p = bmp.read(x,y);
-    		bmp.write(x, y, p^1);
-    	}
-    }
-    bmp.save("other1.bmp");
+	Structures::BMP file ("../images/lado.bmp");
 
+
+	std::string str = "Tam fortis, tamen tam stupidus! Utinam habeas cerebrum simile tuae fortitudini.";
+	std::vector<uint8_t> data(str.begin(), str.end());
+
+	file.Write(data, Config::StegoInsertion::LSB1);
+
+
+	auto diff = file.Read(Config::StegoInsertion::LSB1);
+
+
+	for(auto it = diff.begin(); it != diff.end(); it++){
+		std::cout << (char)*it;
+	}
+
+	std::cout << std::endl;
+
+	std::ofstream  output_file("example.txt");
+	std::ostream_iterator<std::uint8_t> output_iterator(output_file);
+	std::copy(diff.begin(), diff.end(), output_iterator);
+
+
+    /*
 	std::cout << "hfasdfasdsdf!" << std::endl;
 
 	auto arr = "hello world";
@@ -44,7 +56,7 @@ int main(int argc, char*argv[])
 	std::strcpy(arr2, arr);
 
 	std::cout << "arr2" << arr2 << std::endl;
-		
+	*/
 
     /*
 	try {
