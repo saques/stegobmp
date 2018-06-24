@@ -18,7 +18,7 @@ int extract(Config::ArgumentList& opts)
 	auto encryptedMessage = carrier.Read(opts.GetStegoInsertion());
 	auto encryptedStringStream = std::stringstream(std::string(encryptedMessage.begin(), encryptedMessage.end()));
 	Crypto::Encoder encoder;
-	auto& outputFile = encoder.Decrypt(encryptedStringStream, opts);
+	auto outputFile = encoder.Decrypt(encryptedStringStream, opts);
 	return EXIT_SUCCESS;
 }
 
@@ -29,10 +29,11 @@ int embed(Config::ArgumentList& opts)
 		throw std::invalid_argument("Could not open input file.");
 	}
 	Crypto::Encoder encoder;
-	auto& message = encoder.Encrypt(plainText, opts);
+	auto message = encoder.Encrypt(plainText, opts);
 	Structures::BMP carrier(opts.GetCarrierFilePath());
 	auto messageStr = message.str();
-	carrier.Write(std::vector<uint8_t>(messageStr.begin(), messageStr.end()), opts.GetStegoInsertion());
+	std::vector<uint8_t> vectorMessage(messageStr.begin(), messageStr.end());
+	carrier.Write(vectorMessage, opts.GetStegoInsertion());
 	carrier.Save(opts.GetOutFilePath());
 	return EXIT_SUCCESS;
 }
