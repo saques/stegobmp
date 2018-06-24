@@ -5,7 +5,7 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 
-#define MAX_CYPHERTEXT_SIZE 128
+#define MAX_CYPHERTEXT_SIZE 1024
 namespace Crypto {
 	class Encoder {
 	public:
@@ -13,7 +13,7 @@ namespace Crypto {
 
 		std::ostringstream Encrypt(std::istream& input, Config::ArgumentList &args)
 		{
-			std::ostringstream output;
+			std::ostringstream output(std::ios::binary);
 			Cypher(input, output,  args.GetPassword(), args.GetEncryptionFunction(),  1);
 			return std::move(output);
 		}
@@ -21,6 +21,9 @@ namespace Crypto {
 		std::ofstream Decrypt(std::istream& input, Config::ArgumentList &args)
 		{
 			std::ofstream  output(args.GetOutFilePath(), std::ios_base::binary);
+			if (!output.is_open()) {
+				throw std::invalid_argument("Could not open output file");
+			}
 			Cypher(input, output, args.GetPassword(), args.GetEncryptionFunction(), 0);
 			return std::move(output);
 		}
