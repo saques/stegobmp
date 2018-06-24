@@ -15,7 +15,7 @@ namespace Crypto {
 		{
 			std::ostringstream output(std::ios::binary);
 			Cypher(input, output,  args.GetPassword(), args.GetEncryptionFunction(),  1);
-			return std::move(output);
+			return output;
 		}
 		
 		std::ofstream Decrypt(std::istream& input, Config::ArgumentList &args)
@@ -25,7 +25,7 @@ namespace Crypto {
 				throw std::invalid_argument("Could not open output file");
 			}
 			Cypher(input, output, args.GetPassword(), args.GetEncryptionFunction(), 0);
-			return std::move(output);
+			return output;
 		}
 		
 		// mode = {1: encrypt, 0: decrypt, -1: do nothing}
