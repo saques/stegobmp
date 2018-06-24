@@ -25,27 +25,28 @@ int stegobmp(Config::ArgumentList& opts)
 int main(int argc, char*argv[])
 {	
 
-	Structures::BMP file ("../images/lado.bmp");
+	Structures::BMP file ("../images/ladoLSB4.bmp");
 
-
+    /*
 	std::string str = "Tam fortis, tamen tam stupidus! Utinam habeas cerebrum simile tuae fortitudini.";
 	std::vector<uint8_t> data(str.begin(), str.end());
 
 	file.Write(data, Config::StegoInsertion::LSB1);
+    */
 
+	auto diff = file.Read(Config::StegoInsertion::LSB4);
 
-	auto diff = file.Read(Config::StegoInsertion::LSB1);
-
-
+    /*
 	for(auto it = diff.begin(); it != diff.end(); it++){
 		std::cout << (char)*it;
 	}
-
 	std::cout << std::endl;
+    */
 
-	std::ofstream  output_file("example.txt");
+	std::ofstream  output_file("example.pdf", std::ios_base::binary);
 	std::ostream_iterator<std::uint8_t> output_iterator(output_file);
 	std::copy(diff.begin(), diff.end(), output_iterator);
+
 
 
     /*
