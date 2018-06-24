@@ -265,6 +265,9 @@ namespace Structures {
 
         void Save(const std::string &path){
             std::ofstream file (path, std::ios::binary);
+			if (!file.is_open()) {
+				throw std::invalid_argument("Invalid output file path.");
+			}
             file.write((char *)&fileh, sizeof(BITMAPFILEHEADER));
             file.write((char *)&infoh, sizeof(BITMAPINFOHEADER));
             file.write((char *) *metadata, fileh.bfOffBits-sizeof(BITMAPFILEHEADER)-sizeof(BITMAPINFOHEADER));

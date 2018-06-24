@@ -24,9 +24,9 @@ void TestParam(char * commandLineOption, char * arg, T stego, const T &(Config::
 }
 
 TEST(ArgumentList, ArgumentsWorkProperly) {
-	TestParam("--steg", "LSB1", Config::StegoInsertion::LSB1, &Config::ArgumentList::GetStego);
-	TestParam("--steg", "LSB4", Config::StegoInsertion::LSB4, &Config::ArgumentList::GetStego);
-	TestParam("--steg", "asfdas", Config::StegoInsertion::UNDEFINED, &Config::ArgumentList::GetStego);
+	TestParam("--steg", "LSB1", Config::StegoInsertion::LSB1, &Config::ArgumentList::GetStegoInsertion);
+	TestParam("--steg", "LSB4", Config::StegoInsertion::LSB4, &Config::ArgumentList::GetStegoInsertion);
+	TestParam("--steg", "asfdas", Config::StegoInsertion::UNDEFINED, &Config::ArgumentList::GetStegoInsertion);
 	
 	TestParam("-a", "aes128", Config::StegoCypher::AES128, &Config::ArgumentList::GetCypher);
 	TestParam("-a", "aes192", Config::StegoCypher::AES192, &Config::ArgumentList::GetCypher);
@@ -94,18 +94,20 @@ void TestCipher(std::string message, std::string password, const EVP_CIPHER * cy
 
 	// encrypt
 	std::istringstream messageStream(message);
-	auto cypherText = encoder.Cypher(messageStream, password, cypher, 1);
+	std::ostringstream cypherText;
+	encoder.Cypher(messageStream, cypherText, password, cypher, 1);
 	// decrypt
-	std::istringstream cypherStream(cypherText);
-	auto plainText = encoder.Cypher(cypherStream, password, cypher, 0);
-	EXPECT_EQ(message, plainText);
+	std::istringstream cypherStream(cypherText.str());
+	std::ostringstream plainText;
+	encoder.Cypher(cypherStream, plainText, password, cypher, 0);
+	EXPECT_EQ(message, plainText.str());
 
 }
 
 TEST(StegoEncoder, TestingEncoding)	{
 	TestCipher("hola mundo", "1234", EVP_aes_128_cbc());
-	TestCipher("a", "contrasenia muy larga 12318319823u912838129381239128391283129831298319281123125134523452345345", EVP_aes_128_cfb());
-	TestCipher("mensaje largoaskldfjas;lkdfj;laskjdf;lksajdf;lksajdf;lksajd;fkljaskldfj;lkasjdf;lk", "1", EVP_aes_256_ofb());
+	TestCipher("a", "contrasenia muy larga 12318319823u912838129381239128391283129831298319281123125134523452345345", EVP_aes_128_cfb8());
+	TestCipher("mensaje largoaskldfjas;lkdfj;laskjdf;lksajdf;lksajdf;lksajd;fkljaskldfj;lkasjdf;lk", "jkjaljsfkhdlfjhasd", EVP_aes_256_ofb());
 	TestCipher("hola mundo", "1234", EVP_des_cbc());
 }
 

@@ -7,8 +7,34 @@
 #include <easylogging++.h>
 #include "ArgumentList.h"
 #include "BMP.h"
+#include "StegoEncoder.h"
 
 INITIALIZE_EASYLOGGINGPP
+
+
+int extract(Config::ArgumentList& opts)
+{
+	Structures::BMP carrier(opts.GetCarrierFilePath());
+	auto encryptedMessage = carrier.Read(opts.GetStegoInsertion());
+	auto encryptedStringStream = std::stringstream(std::string(encryptedMessage.begin(), encryptedMessage.end()));
+	Crypto::Encoder encoder;
+	auto& outputFile = encoder.Decrypt(encryptedStringStream, opts);
+	return EXIT_SUCCESS;
+}
+
+int embed(Config::ArgumentList& opts)
+{
+	std::ifstream plainText(opts.GetInFilePath(), std::ios_base::binary);
+	Crypto::Encoder encoder;
+	auto& message = encoder.Encrypt(plainText, opts);
+	Structures::BMP carrier(opts.GetCarrierFilePath());
+	auto messageStr = message.str();
+	carrier.Write(std::vector<uint8_t>(messageStr.begin(), messageStr.end()), opts.GetStegoInsertion());
+	
+	carrier.Save(opts.GetOutFilePath());
+	return EXIT_SUCCESS;
+}
+
 
 int stegobmp(Config::ArgumentList& opts)
 {
@@ -16,17 +42,21 @@ int stegobmp(Config::ArgumentList& opts)
 	auto err = opts.OptionsAreValid(valid);
 	if (!valid) {
 		std::cout << err << std::endl;
-		return EXIT_SUCCESS;
+		return EXIT_FAILURE;
 	}
 
-	return EXIT_SUCCESS;
+	if (opts.IsExtract()) {
+		return extract(opts);
+	}
+	else {
+		return embed(opts);
+	}
 }
 
 int main(int argc, char*argv[])
 {	
 
-	Structures::BMP file ("../images/ladoLSB4.bmp");
-
+	//Structures::BMP file ("../images/ladoLSB4.bmp");
     /*
 	std::string str = "Tam fortis, tamen tam stupidus! Utinam habeas cerebrum simile tuae fortitudini.";
 	std::vector<uint8_t> data(str.begin(), str.end());
@@ -34,7 +64,7 @@ int main(int argc, char*argv[])
 	file.Write(data, Config::StegoInsertion::LSB1);
     */
 
-	auto diff = file.Read(Config::StegoInsertion::LSB4);
+	//auto diff = file.Read(Config::StegoInsertion::LSB4);
 
     /*
 	for(auto it = diff.begin(); it != diff.end(); it++){
@@ -43,23 +73,11 @@ int main(int argc, char*argv[])
 	std::cout << std::endl;
     */
 
-	std::ofstream  output_file("example.pdf", std::ios_base::binary);
-	std::ostream_iterator<std::uint8_t> output_iterator(output_file);
-	std::copy(diff.begin(), diff.end(), output_iterator);
+	//std::ofstream  output_file("example.pdf", std::ios_base::binary);
+	//std::ostream_iterator<std::uint8_t> output_iterator(output_file);
 
 
 
-    /*
-	std::cout << "hfasdfasdsdf!" << std::endl;
-
-	auto arr = "hello world";
-	char * arr2 = new char[3];
-	std::strcpy(arr2, arr);
-
-	std::cout << "arr2" << arr2 << std::endl;
-	*/
-
-    /*
 	try {
 		Config::ArgumentList opts(argc, argv);
 		return stegobmp(opts);
@@ -68,5 +86,4 @@ int main(int argc, char*argv[])
 		std::cout << ex.what() << std::endl;
 		return EXIT_FAILURE;
 	}
-    */
 }

@@ -11,26 +11,22 @@ namespace Crypto {
 	public:
 		Encoder(){}
 
-		std::string Encrypt(Config::ArgumentList &args)
+		std::ostringstream Encrypt(std::istream& input, Config::ArgumentList &args)
 		{
-			std::ifstream input(args.GetInFilePath());
-			if (!input.is_open()) {
-				throw std::invalid_argument("Invalid path: Could not open the input file.");
-			}
-			return Cypher(input, args.GetPassword(), args.GetEncryptionFunction(),  1);
+			std::ostringstream output;
+			Cypher(input, output,  args.GetPassword(), args.GetEncryptionFunction(),  1);
+			return std::move(output);
 		}
 		
-		std::string Decrypt(Config::ArgumentList &args)
+		std::ofstream Decrypt(std::istream& input, Config::ArgumentList &args)
 		{
-			std::ifstream input(args.GetInFilePath());
-			if (!input.is_open()) {
-				throw std::invalid_argument("Invalid path: Could not open the input file.");
-			}
-			return Cypher(input, args.GetPassword(), args.GetEncryptionFunction(), 0);
+			std::ofstream  output(args.GetOutFilePath(), std::ios_base::binary);
+			Cypher(input, output, args.GetPassword(), args.GetEncryptionFunction(), 0);
+			return std::move(output);
 		}
 		
 		// mode = {1: encrypt, 0: decrypt, -1: do nothing}
-		std::string Cypher(std::istream &input, std::string password, const EVP_CIPHER * encFunction, int mode)
+		void Cypher(std::istream &input, std::ostream& output, std::string password, const EVP_CIPHER * encFunction, int mode)
 		{
 			//	Initialize EVP Cypher context
 			EVP_CIPHER_CTX * ctx = EVP_CIPHER_CTX_new();
@@ -45,17 +41,15 @@ namespace Crypto {
 			// Cypher in MAX_CYPHERTEXT_SIZE chunks, complete cyphered message in output
 			char inputBlock[MAX_CYPHERTEXT_SIZE], outputBlock[MAX_CYPHERTEXT_SIZE];
 			int outl;
-			std::string output;
 			while (!input.eof()) {
-				auto read = input.read(inputBlock, MAX_CYPHERTEXT_SIZE).gcount();
+				auto read = input.read(inputBlock, MAX_CYPHERTEXT_SIZE-1).gcount();
 				EVP_CipherUpdate(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl, reinterpret_cast<unsigned char *>(inputBlock), static_cast<int>(read));
-				output.append(outputBlock, static_cast<size_t>(outl));
+				output.write(outputBlock, outl);
 			}
 			EVP_CipherFinal(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl);
-			output.append(outputBlock, static_cast<size_t>(outl));
+			output.write(outputBlock, outl);
 			// Dont forget to free cypher context
 			EVP_CIPHER_CTX_free(ctx);
-			return output;
 		}
 
 	private:
@@ -67,14 +61,7 @@ namespace Crypto {
 			key = std::unique_ptr<uint8_t[]>(new uint8_t[keyLength]);
 			iv = std::unique_ptr<uint8_t[]>(new uint8_t[ivLength]);
 			// We use count = 1, the default
-			EVP_BytesToKey(encFunction, EVP_md5(), nullptr, reinterpret_cast<const uint8_t*>(password.data()), static_cast<int>(password.size()), 1, key.get(), iv.get());
-		}
-
-
-		std::string slurp(std::ifstream& in) {
-			std::stringstream sstr;
-			sstr << in.rdbuf();
-			return sstr.str();
+			EVP_BytesToKey(encFunction, EVP_sha256(), nullptr, reinterpret_cast<const uint8_t*>(password.data()), static_cast<int>(password.size()), 1, key.get(), iv.get());
 		}
 	};
 }

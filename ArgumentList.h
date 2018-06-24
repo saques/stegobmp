@@ -44,10 +44,10 @@ namespace Config
 			if (carrierFilePath.empty()) {
 				val += "Falta -p <archivo bmp portador>.\n";
 			}
-			if(inFilePath.empty()) {
+			if(inFilePath.empty() && embed) {
 				val += "Falta --in <archivo de entrada>.\n";
 			}
-			if (outFilePath.empty() && embed) {
+			if (outFilePath.empty()) {
 				val += "Falta --out <archivo de salida>.\n";
 			}
 			if (steg == StegoInsertion::UNDEFINED) {
@@ -81,7 +81,7 @@ namespace Config
 			return inFilePath;
 		}
 
-		const StegoInsertion& GetStego() 
+		const StegoInsertion& GetStegoInsertion() 
 		{
 			return steg;
 		}
@@ -111,6 +111,16 @@ namespace Config
 			return password;
 		}
 
+		bool IsEmbed()
+		{
+			return embed;
+		}
+
+		bool IsExtract()
+		{
+			return extract;
+		}
+
 		const EVP_CIPHER* GetEncryptionFunction()
 		{
 			switch (cypher) 
@@ -121,7 +131,7 @@ namespace Config
 				case StegoBlock::CBC:
 					return EVP_aes_128_cbc();
 				case StegoBlock::CFB:
-					return EVP_aes_128_cfb();
+					return EVP_aes_128_cfb8();
 				case StegoBlock::ECB:
 					return EVP_aes_128_ecb();
 				case StegoBlock::OFB:
@@ -135,7 +145,7 @@ namespace Config
 				case StegoBlock::CBC:
 					return EVP_aes_192_cbc();
 				case StegoBlock::CFB:
-					return EVP_aes_192_cfb();
+					return EVP_aes_192_cfb8();
 				case StegoBlock::ECB:
 					return EVP_aes_192_ecb();
 				case StegoBlock::OFB:
@@ -150,7 +160,7 @@ namespace Config
 				case StegoBlock::CBC:
 					return EVP_aes_256_cbc();
 				case StegoBlock::CFB:
-					return EVP_aes_256_cfb();
+					return EVP_aes_256_cfb8();
 				case StegoBlock::ECB:
 					return EVP_aes_256_ecb();
 				case StegoBlock::OFB:
@@ -165,7 +175,7 @@ namespace Config
 				case StegoBlock::CBC:
 					return EVP_des_cbc();
 				case StegoBlock::CFB:
-					return EVP_des_cfb();
+					return EVP_des_cfb8();
 				case StegoBlock::ECB:
 					return EVP_des_ecb();
 				case StegoBlock::OFB:
