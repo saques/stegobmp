@@ -173,7 +173,17 @@ namespace Structures {
                     break;
 
                 case Config::StegoInsertion::LSBE:
-                    //TODO: Read paper
+					//Write size
+					for (; p<4; p++) {
+						PutByteLSBE(data, p, (uint8_t)(size >> ((3 - p) * 8)));
+					}
+
+					//Write contents
+
+					for (auto it = d.begin(); it != d.end(); it++)
+						PutByteLSBE(data, p++, *it);
+
+					//TODO: Write extension
                     break;
                 default:
                     throw std::invalid_argument("Illegal insertion mode");
@@ -216,7 +226,19 @@ namespace Structures {
                     break;
 
                 case Config::StegoInsertion::LSBE:
-                    //TODO: Read paper
+					//Read size
+					for (; p<4; p++) {
+						size |= (GetByteLSBE(data, p)) << (3 - p) * 8;
+					}
+
+					//Read contents
+					for (; p < size + 4; p++)
+						ans.push_back(GetByteLSBE(data, p));
+
+					//Read extension
+					for (; (b = GetByteLSBE(data, p)) != 0; p++) {
+						//ans.push_back(b);
+					}
                     break;
                 default:
                     throw std::invalid_argument("Illegal insertion mode");
@@ -294,6 +316,24 @@ namespace Structures {
             return ans;
         }
 
+		static uint8_t GetByteLSBE(const std::unique_ptr<uint8_t *> & data, uint32_t p) {
+
+			uint8_t bpB = 1;
+			uint8_t ans = 0, mask = ~((uint8_t)((uint8_t)0xFF << bpB));
+
+
+			uint32_t off = ((uint8_t)8 / bpB);
+			p *= off;
+			uint32_t bitsDecoded = 0;
+
+			for (uint32_t delta = 0; bitsDecoded < 8; delta++) {
+				if ((*data)[p + delta] == 254 || (*data)[p + delta] == 255) {
+					ans |= (uint8_t)((*data)[p + delta] & mask) << (off - 1 - delta)*bpB;
+					bitsDecoded++;
+				}
+			}
+			return ans;
+		}
 
         static void PutByte(const std::unique_ptr<uint8_t *> & data, uint32_t p, uint8_t bpB, uint8_t payload){
             if(bpB > 8 || bpB == 0)
@@ -316,6 +356,27 @@ namespace Structures {
 
 
         }
+
+		static void PutByteLSBE(const std::unique_ptr<uint8_t *> & data, uint32_t p, uint8_t payload){
+			uint8_t bpB = (uint8_t)1 ;
+			uint8_t hiMask = ((uint8_t)0xFF << bpB), loMask = ~hiMask;
+
+			uint32_t off = ((uint8_t)8 / bpB);
+			p *= off;
+			uint32_t bitsEncoded = 0;
+			for (uint32_t delta = 0; bitsEncoded < 8; delta++) {
+				if ((*data)[p + delta] == 254 || (*data)[p + delta] == 255) {
+					(*data)[p + delta] = (uint8_t)((*data)[p + delta] & hiMask) |
+						(uint8_t)((uint8_t)(payload >> (off - 1 - delta) * bpB) & loMask);
+					bitsEncoded++;
+				}
+
+
+			}
+
+
+
+		}
 
 
         bool LSB1OutOfSize(uint64_t bytes){
