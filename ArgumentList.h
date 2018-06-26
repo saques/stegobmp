@@ -24,6 +24,7 @@ namespace Config
 				
 			options.custom_help("[--embed|--extract] [OPTION...] ");
 			options.parse(argc, argv);
+
 		};
 
 		/*	Checks if arguments make up a valid request.
@@ -79,6 +80,11 @@ namespace Config
 		const std::string& GetInFilePath() 
 		{
 			return inFilePath;
+		}
+
+		const std::vector<uint8_t>& GetInFileExtension()
+		{
+			return inFileExtension;
 		}
 
 		const StegoInsertion& GetStegoInsertion() 
@@ -193,6 +199,7 @@ namespace Config
 	private:
 		cxxopts::Options options;
 		std::string inFilePath;
+		std::vector<uint8_t> inFileExtension;
 		std::string outFilePath;
 		std::string carrierFilePath;
 		StegoInsertion steg;
