@@ -133,7 +133,7 @@ namespace Structures {
          * @param data
          * @param mode
          */
-        void Write(std::vector<uint8_t> &d, Config::StegoInsertion mode){
+        void Write(std::vector<uint8_t> &d, Config::StegoInsertion mode, Config::StegoCypher cypher){
 
             uint32_t p = 0;
             uint8_t bpb;
@@ -158,10 +158,12 @@ namespace Structures {
 
                 LSB1_LSB4:
 
-                    //Write size
-                    for(; p<4; p++){
-                        PutByte(data, p, bpb, (uint8_t)(size>>((3-p)*8)));
-                    }
+                    //Write size only if encrypted
+					if (cypher != Config::StegoCypher::UNDEFINED) {
+						for (; p<4; p++) {
+							PutByte(data, p, bpb, (uint8_t)(size >> ((3 - p) * 8)));
+						}
+					}
 
                     //Write contents
 
@@ -174,8 +176,10 @@ namespace Structures {
 
                 case Config::StegoInsertion::LSBE:
 					//Write size
-					for (; p<4; p++) {
-						PutByteLSBE(data, p, (uint8_t)(size >> ((3 - p) * 8)));
+					if (cypher != Config::StegoCypher::UNDEFINED) {
+						for (; p < 4; p++) {
+							PutByteLSBE(data, p, (uint8_t)(size >> ((3 - p) * 8)));
+						}
 					}
 
 					//Write contents
@@ -190,7 +194,7 @@ namespace Structures {
             }
         }
 
-        std::vector<uint8_t> Read(Config::StegoInsertion mode){
+        std::vector<uint8_t> Read(Config::StegoInsertion mode, Config::StegoCypher cypher, uint32_t& outSize){
 
             std::vector<uint8_t> ans;
 
@@ -218,10 +222,12 @@ namespace Structures {
                     for( ; p < size + 4; p++)
                         ans.push_back(GetByte(data, p, bpb));
 
-                    //Read extension
-                    for( ; (b = GetByte(data, p, bpb)) != 0; p++) {
-                        //ans.push_back(b);
-                    }
+					if (cypher == Config::StegoCypher::UNDEFINED) {
+						//Read extension
+						for (; (b = GetByte(data, p, bpb)) != 0; p++) {
+							ans.push_back(b);
+						}
+					}
 
                     break;
 
@@ -235,15 +241,16 @@ namespace Structures {
 					for (; p < size + 4; p++)
 						ans.push_back(GetByteLSBE(data, p));
 
-					//Read extension
-					for (; (b = GetByteLSBE(data, p)) != 0; p++) {
-						//ans.push_back(b);
+					if (cypher == Config::StegoCypher::UNDEFINED) {
+						for (; (b = GetByteLSBE(data, p)) != 0; p++) {
+							ans.push_back(b);
+						}
 					}
                     break;
                 default:
                     throw std::invalid_argument("Illegal insertion mode");
             }
-
+			outSize = size;
             return ans;
         }
 
