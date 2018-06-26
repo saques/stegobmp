@@ -18,18 +18,60 @@ int extract(Config::ArgumentList& opts)
 	auto encryptedMessage = carrier.Read(opts.GetStegoInsertion());
 	auto encryptedStringStream = std::stringstream(std::string(encryptedMessage.begin(), encryptedMessage.end()));
 	Crypto::Encoder encoder;
-	auto outputFile = encoder.Decrypt(encryptedStringStream, opts);
+	auto outString = encoder.Decrypt(encryptedStringStream, opts);
+
+	// Read 4 bytes for size (BIG ENDIAN)
+	uint32_t size;
+	outString.read(reinterpret_cast<char*>(&size), sizeof(size));
+
+	// Read content
+	std::string content;
+	content.resize(size);
+	outString.read(&content[0], size);
+
+	// Read null terminated extension
+	std::string extension;
+	outString >> extension;
+
+	// Create outputFile
+	std::ofstream outputFile(opts.GetOutFilePath() + extension, std::ios::binary);
+
+	// Just copy content 
+	outputFile << content;
 	return EXIT_SUCCESS;
+}
+
+std::streampos fileSize(std::ifstream& file) {
+
+	std::streampos fsize = 0;
+	fsize = file.tellg();
+	file.seekg(0, std::ios::end);
+	fsize = file.tellg() - fsize;
+	file.clear();
+	file.seekg(0, std::ios::beg);
+	return fsize;
 }
 
 int embed(Config::ArgumentList& opts)
 {
-	std::ifstream plainText(opts.GetInFilePath(), std::ios_base::binary);
+	std::ifstream plainText(opts.GetInFilePath(), std::ios::binary );
 	if (!plainText.is_open()) {
 		throw std::invalid_argument("Could not open input file.");
 	}
+	std::stringstream plainTextPlusSize;
+	{
+		// Insert content size (BIG ENDIAN)
+		uint32_t size = fileSize(plainText);
+		plainTextPlusSize.write(reinterpret_cast<char*>(&size), sizeof(size));
+		// Insert content
+		plainTextPlusSize << plainText.rdbuf();
+
+		// Insert extension
+		std::string extension(opts.GetInFilePath().substr(opts.GetInFilePath().find_last_of(".")));
+		plainTextPlusSize << extension;
+	}
 	Crypto::Encoder encoder;
-	auto message = encoder.Encrypt(plainText, opts);
+	auto message = encoder.Encrypt(plainTextPlusSize, opts);
 	Structures::BMP carrier(opts.GetCarrierFilePath());
 	auto messageStr = message.str();
 	std::vector<uint8_t> vectorMessage(messageStr.begin(), messageStr.end());
@@ -58,29 +100,6 @@ int stegobmp(Config::ArgumentList& opts)
 
 int main(int argc, char*argv[])
 {	
-
-	//Structures::BMP file ("../images/ladoLSB4.bmp");
-    /*
-	std::string str = "Tam fortis, tamen tam stupidus! Utinam habeas cerebrum simile tuae fortitudini.";
-	std::vector<uint8_t> data(str.begin(), str.end());
-
-	file.Write(data, Config::StegoInsertion::LSB1);
-    */
-
-	//auto diff = file.Read(Config::StegoInsertion::LSB4);
-
-    /*
-	for(auto it = diff.begin(); it != diff.end(); it++){
-		std::cout << (char)*it;
-	}
-	std::cout << std::endl;
-    */
-
-	//std::ofstream  output_file("example.pdf", std::ios_base::binary);
-	//std::ostream_iterator<std::uint8_t> output_iterator(output_file);
-
-
-
 	try {
 		Config::ArgumentList opts(argc, argv);
 		return stegobmp(opts);

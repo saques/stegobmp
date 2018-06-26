@@ -13,17 +13,14 @@ namespace Crypto {
 
 		std::ostringstream Encrypt(std::istream& input, Config::ArgumentList &args)
 		{
-			std::ostringstream output(std::ios::binary);
+			std::ostringstream output;
 			Cypher(input, output,  args.GetPassword(), args.GetEncryptionFunction(),  1);
 			return output;
 		}
 		
-		std::ofstream Decrypt(std::istream& input, Config::ArgumentList &args)
+		std::stringstream Decrypt(std::istream& input, Config::ArgumentList &args)
 		{
-			std::ofstream  output(args.GetOutFilePath(), std::ios_base::binary);
-			if (!output.is_open()) {
-				throw std::invalid_argument("Could not open output file");
-			}
+			std::stringstream output;
 			Cypher(input, output, args.GetPassword(), args.GetEncryptionFunction(), 0);
 			return output;
 		}
@@ -46,6 +43,9 @@ namespace Crypto {
 			int outl;
 			while (!input.eof()) {
 				auto read = input.read(inputBlock, MAX_CYPHERTEXT_SIZE-1).gcount();
+				if (read == 0) {
+					break;
+				}
 				EVP_CipherUpdate(ctx, reinterpret_cast<unsigned char *>(outputBlock), &outl, reinterpret_cast<unsigned char *>(inputBlock), static_cast<int>(read));
 				output.write(outputBlock, outl);
 			}
