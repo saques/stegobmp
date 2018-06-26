@@ -28,6 +28,35 @@ int embed(Config::ArgumentList& opts)
 	if (!plainText.is_open()) {
 		throw std::invalid_argument("Could not open input file.");
 	}
+
+
+	/**
+	 *
+    std::vector<uint8_t> vector;
+	std::istream_iterator<uint8_t> istream_iterator(plainText);
+    std::copy( std::istream_iterator<uint8_t>(istream_iterator),
+               std::istream_iterator<uint8_t>(),
+               std::back_inserter(vector));
+
+    uint64_t size = vector.size();
+	//Write size
+    for(int p=3; p>=0; p--){
+        vector.insert(vector.begin(),(uint8_t)(size>>(uint8_t)((3-p)*8)));
+    }
+
+	//Write fmt
+    vector.insert(vector.end(), (uint8_t)".");
+	for(auto it = opts.GetInFileExtension().begin(); it != opts.GetInFileExtension().end(); ++it)
+		vector.insert(vector.end(), *it);
+
+	std::ifstream payload;
+	std::copy(vector.begin(), vector.end(),
+		 std::istream_iterator<uint8_t >(payload));
+
+	 */
+
+
+
 	Crypto::Encoder encoder;
 	auto message = encoder.Encrypt(plainText, opts);
 	Structures::BMP carrier(opts.GetCarrierFilePath());

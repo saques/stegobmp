@@ -18,17 +18,17 @@ namespace Crypto {
 			return output;
 		}
 		
-		std::ofstream Decrypt(std::istream& input, Config::ArgumentList &args)
-		{
-			std::ofstream  output(args.GetOutFilePath(), std::ios_base::binary);
-			if (!output.is_open()) {
-				throw std::invalid_argument("Could not open output file");
-			}
-			Cypher(input, output, args.GetPassword(), args.GetEncryptionFunction(), 0);
-			return output;
-		}
-		
-		// mode = {1: encrypt, 0: decrypt, -1: do nothing}
+        std::ofstream Decrypt(std::istream& input, Config::ArgumentList &args)
+        {
+            std::ofstream  output(args.GetOutFilePath(), std::ios_base::binary);
+            if (!output.is_open()) {
+                throw std::invalid_argument("Could not open output file");
+            }
+            Cypher(input, output, args.GetPassword(), args.GetEncryptionFunction(), 0);
+            return output;
+        }
+
+        // mode = {1: encrypt, 0: decrypt, -1: do nothing}
 		void Cypher(std::istream &input, std::ostream& output, std::string password, const EVP_CIPHER * encFunction, int mode)
 		{
 			//	Initialize EVP Cypher context
