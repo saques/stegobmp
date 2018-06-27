@@ -139,6 +139,7 @@ namespace Structures {
             uint8_t bpb;
             uint64_t size = d.size();
             uint8_t b = 0;
+			uint32_t i = 0;
 
 
             switch (mode){
@@ -177,15 +178,15 @@ namespace Structures {
                 case Config::StegoInsertion::LSBE:
 					//Write size
 					if (cypher != Config::StegoCypher::UNDEFINED) {
-						for (; p < 4; p++) {
-							PutByteLSBE(data, p, (uint8_t)(size >> ((3 - p) * 8)));
+						for (; i < 4; i++) {
+							PutByteLSBE(data, p, (uint8_t)(size >> ((3 - i) * 8)),absoluteSize);
 						}
-					}
+					}					
 
 					//Write contents
 
 					for (auto it = d.begin(); it != d.end(); it++)
-						PutByteLSBE(data, p++, *it);
+						PutByteLSBE(data, p, *it,absoluteSize);
 
 					//TODO: Write extension
                     break;
@@ -202,6 +203,7 @@ namespace Structures {
             uint8_t bpb;
             uint64_t size = 0;
             uint8_t b = 0;
+			uint32_t i = 0;
 
             switch (mode){
 
@@ -211,12 +213,19 @@ namespace Structures {
                 case Config::StegoInsertion::LSB4:
                     bpb = 4;
 
+
                 LSB1_LSB4:
 
                     //Read size
                     for(; p<4; p++){
                         size |= (GetByte(data, p, bpb))<<(3-p)*8;
                     }
+
+					if (bpb == 4 && LSB4OutOfSize(size))
+						throw std::out_of_range("Wrong extract, check your method");
+
+					if (bpb == 1 && LSB1OutOfSize(size))
+						throw std::out_of_range("Wrong extract, check your method");
 
                     //Read contents
                     for( ; p < size + 4; p++)
@@ -232,21 +241,23 @@ namespace Structures {
                     break;
 
                 case Config::StegoInsertion::LSBE:
+
 					//Read size
-					for (; p<4; p++) {
-						size |= (GetByteLSBE(data, p)) << (3 - p) * 8;
+					for (; i<4; i++) {
+						size |= (GetByteLSBE(data, p)) << (3 - i) * 8;
 					}
+					std::cout << std::endl;
 
 					//Read contents
-					for (; p < size + 4; p++)
+					for (; i < size + 4; i++)
 						ans.push_back(GetByteLSBE(data, p));
 
 					if (cypher == Config::StegoCypher::UNDEFINED) {
-						for (; (b = GetByteLSBE(data, p)) != 0; p++) {
+						for (; (b = GetByteLSBE(data, p)) != 0; ) {
 							ans.push_back(b);
 						}
 					}
-                    break;
+					break;
                 default:
                     throw std::invalid_argument("Illegal insertion mode");
             }
@@ -323,22 +334,21 @@ namespace Structures {
             return ans;
         }
 
-		static uint8_t GetByteLSBE(const std::unique_ptr<uint8_t *> & data, uint32_t p) {
+		static uint8_t GetByteLSBE(const std::unique_ptr<uint8_t *> & data, uint32_t& p) {
 
 			uint8_t bpB = 1;
 			uint8_t ans = 0, mask = ~((uint8_t)((uint8_t)0xFF << bpB));
 
-
 			uint32_t off = ((uint8_t)8 / bpB);
-			p *= off;
 			uint32_t bitsDecoded = 0;
-
-			for (uint32_t delta = 0; bitsDecoded < 8; delta++) {
+			uint32_t delta = 0;
+			for (; bitsDecoded < 8; delta++) {
 				if ((*data)[p + delta] == 254 || (*data)[p + delta] == 255) {
-					ans |= (uint8_t)((*data)[p + delta] & mask) << (off - 1 - delta)*bpB;
+					ans |= (uint8_t)((*data)[p + delta] & mask) << (off - 1 - bitsDecoded)*bpB;
 					bitsDecoded++;
 				}
 			}
+			p += delta;
 			return ans;
 		}
 
@@ -364,22 +374,26 @@ namespace Structures {
 
         }
 
-		static void PutByteLSBE(const std::unique_ptr<uint8_t *> & data, uint32_t p, uint8_t payload){
-			uint8_t bpB = (uint8_t)1 ;
+		static void PutByteLSBE(const std::unique_ptr<uint8_t *> & data, uint32_t& p, uint8_t payload,uint64_t absoluteSize) {
+			uint8_t bpB = (uint8_t)1;
 			uint8_t hiMask = ((uint8_t)0xFF << bpB), loMask = ~hiMask;
 
 			uint32_t off = ((uint8_t)8 / bpB);
-			p *= off;
 			uint32_t bitsEncoded = 0;
-			for (uint32_t delta = 0; bitsEncoded < 8; delta++) {
+			uint32_t delta = 0;
+			for (; bitsEncoded < 8; delta++) {
+				if (p + delta > absoluteSize) {
+					throw std::out_of_range("Origin data bigger than available size");
+				}
 				if ((*data)[p + delta] == 254 || (*data)[p + delta] == 255) {
 					(*data)[p + delta] = (uint8_t)((*data)[p + delta] & hiMask) |
-						(uint8_t)((uint8_t)(payload >> (off - 1 - delta) * bpB) & loMask);
+						(uint8_t)((uint8_t)(payload >> (off - 1 - bitsEncoded) * bpB) & loMask);
 					bitsEncoded++;
 				}
 
 
 			}
+			p += delta;
 
 
 
