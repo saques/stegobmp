@@ -36,3 +36,9 @@ Luego:
 	* Password: camaleon ("la password es camaleon", data al final de lima.bmp)
 	
 Así, se puede descomprimir el wav.
+
+NOTA:
+
+En primera instancia, al haber probado los algoritmos de embebido, y al haber extraido nuestro programa un archivo .wav "teoricamente plano" de secreto1.bmp, se supuso que el .wav era, en efecto, un archivo encriptado con DES ECB, que se iba a poder desencriptar por afuera de nuestro programa. Evidentemente, la Cátedra colocó para despistar la extensión .wav luego del payload encriptado, para que se levante informacion como si fuese texto plano, sin evidenciar esto el programa.
+
+Al no poder desencriptarlo, se probo correr stegobmp sobre secreto1.bmp con (LSB1, DES, ECB, "camaleon"), asi pudiendose extraer el video. 
