@@ -2,7 +2,7 @@ Instrucciones:
 
 * hugo.bmp contiene texto plano embebido en modo LSBE.
 	* Inspeccionando a partir del byte N°54, se ve que, de ser LSB4, el tamaño del contenido sería de ‭72A6F85E‬ bytes, es decir, casi 2 GB, lo cual es imposible. De ser LSB1, al ser el primer bit 1, el tamaño sería aún más imposible. Por ende, debe ser LSBE.
-* secreto1.bmp contiene texto plano embebido en modo LSB1.
+* secreto1.bmp contiene "texto plano" (ver mas adelante) embebido en modo LSB1.
 	* Procediendo de igual forma, asumiendo que el tipo de inserción es LSB4, el tamaño del contenido sería de ‭A46C68EA‬ bytes, es decir, casi 3 GB. Por ende, debe ser LSB1. 
 * titanic.bmp contiene texto plano embebido en modo LSB4.
 	* Por descarte, se probó LSB4 y anduvo. 
