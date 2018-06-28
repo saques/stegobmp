@@ -33,6 +33,11 @@ int extract(Config::ArgumentList& opts)
 		size = firstReadSize;
 	}
 	
+	// Check size makes sense
+	if (size > encryptedMessage.size()) {
+		throw std::exception("Read failed: reported size mismatch.");
+	}
+
 	// Read content
 	std::string content;
 	content.resize(size);

@@ -17,9 +17,9 @@ Usage:
       --out arg   Archivo de salida (default: )
       --steg arg  Algoritmo de esteganografiado (default: LSB1)
       --in arg    El archivo de entrada (default: )
-  -a, arg         Algoritmo de cifrado (default: undefined)
-  -m, arg         Cifrado en bloque (default: undefined)
-      --pass arg  Password de encriptacion
+  -a, arg         Algoritmo de cifrado (default: aes128)
+  -m, arg         Cifrado en bloque (default: cbc)
+      --pass arg  Password de encripcion
 ```
 
 # Build en Linux

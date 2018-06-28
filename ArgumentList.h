@@ -16,11 +16,11 @@ namespace Config
 				("h,help", "Mostrar commandos.", cxxopts::value(help))
 				("p", "Archivo bmp que sera el portador", cxxopts::value<std::string>(carrierFilePath)->default_value(""))
 				("out", "Archivo de salida", cxxopts::value<std::string>(outFilePath)->default_value(""))
-				("steg", "Algoritmo de esteganografiado", cxxopts::value<StegoInsertion>(steg)->default_value("LSB1"))
+				("steg", "Algoritmo de esteganografiado <LSB1|LSB4|LSBE>", cxxopts::value<StegoInsertion>(steg)->default_value("LSB1"))
 				("in", "El archivo de entrada", cxxopts::value<std::string>(inFilePath)->default_value(""))
-				("a", "Algoritmo de cifrado", cxxopts::value<StegoCypher>(cypher)->default_value("undefined"))
-				("m", "Cifrado en bloque", cxxopts::value<StegoBlock>(block)->default_value("undefined"))
-				("pass", "Password de encriptacion", cxxopts::value<std::string>(password));
+				("a", "Algoritmo de cifrado <aes128|aes192|aes256|des>", cxxopts::value<StegoCypher>(cypher)->default_value("aes128"))
+				("m", "Cifrado en bloque <ecb|cfb|ofb|cbc>", cxxopts::value<StegoBlock>(block)->default_value("cbc"))
+				("pass", "Password de encripcion", cxxopts::value<std::string>(password));
 				
 			options.custom_help("[--embed|--extract] [OPTION...] ");
 			options.parse(argc, argv);
@@ -39,7 +39,7 @@ namespace Config
 				return GetHelp();
 			}
 			if (!(!(embed && extract) && (embed || extract))) {
-				return "Falta --embed o --extract.";
+				return "Falta --embed o --extract." + GetHelp();
 			}
 			std::string val;
 			if (carrierFilePath.empty()) {
@@ -54,22 +54,13 @@ namespace Config
 			if (steg == StegoInsertion::UNDEFINED) {
 				val += "Falta --steg <LSB1|LSB4|LSBE>. \n";
 			}
-			if (!password.empty()) {	
-				if (cypher == StegoCypher::UNDEFINED) {
-					cypher = StegoCypher::AES128;
-				}
-				if (block == StegoBlock::UNDEFINED) {
-					block = StegoBlock::CBC;
-				}
-			}
-			else {
-				if (cypher != StegoCypher::UNDEFINED || block != StegoBlock::UNDEFINED) {
-					val += "No se puede encriptar sin especificar una clave.\n";
-				}
+			if (password.empty()) {	
+				cypher = StegoCypher::UNDEFINED;
+				block = StegoBlock::UNDEFINED;
 			}
 			
 			if (!val.empty()) {
-				return val;
+				return val + GetHelp();
 			}
 			else {
 				valid = true;
