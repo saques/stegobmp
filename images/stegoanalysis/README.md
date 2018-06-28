@@ -35,7 +35,7 @@ Luego:
 	* Modo: ECB
 	* Password: camaleon ("la password es camaleon", data al final de lima.bmp)
 	
-Así, se puede descomprimir el wav.
+Así, se puede desencriptar el wav.
 
 NOTA:
 
