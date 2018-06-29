@@ -8,17 +8,17 @@
 1. Con la opción `-h` o `--help` se pueden ver los argumentos, que son:
 ```
 Usage:
-  stegobmp [--embed|--extract] [OPTION...] 
+  stegobmp [--embed|--extract] [OPTION...]
 
       --embed     Indica que se va a ocultar informacion
       --extract   Indica que se va a extraer informacion
   -h, --help      Mostrar commandos.
   -p, arg         Archivo bmp que sera el portador (default: )
       --out arg   Archivo de salida (default: )
-      --steg arg  Algoritmo de esteganografiado (default: LSB1)
+      --steg arg  Algoritmo de esteganografiado <LSB1|LSB4|LSBE> (default: LSB1)
       --in arg    El archivo de entrada (default: )
-  -a, arg         Algoritmo de cifrado (default: aes128)
-  -m, arg         Cifrado en bloque (default: cbc)
+  -a, arg         Algoritmo de cifrado <aes128|aes192|aes256|des> (default: aes128)
+  -m, arg         Cifrado en bloque <ecb|cfb|ofb|cbc> (default: cbc)
       --pass arg  Password de encripcion
 ```
 
