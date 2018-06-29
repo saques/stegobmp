@@ -76,7 +76,7 @@ TEST(ArgumentList, AreOptionsValid) {
 	TestAreOptionsValid(ConcatVectors(defaultArgs, std::vector<char*> {
 		"-a",
 		"aes128"
-	}), false);
+	}), true);
 	TestAreOptionsValid(ConcatVectors(defaultArgs, std::vector<char*> {
 		"--pass",
 		"hello wolrd"
