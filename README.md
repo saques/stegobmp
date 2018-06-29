@@ -58,6 +58,12 @@ usar dentro del *mock* de `argv`, y luego liberarlos con `free`).
 ```
 6. Compilar y ejecutar.
 
+# Datos interesantes
+
+* images/stegoanalysis contiene todos los archivos esteganonalizados del set de archivos provistos por la Cátedra para el equipo.
+* images/ contiene todas las imágenes utilizadas al probar. Allí hay un caso en el que se evaluó esteganografiar un archivo en un .bmp completamente blanco. Las diferencias son perceptibles a simple vista.
+* report/ contiene el informe 
+
 
 
 
