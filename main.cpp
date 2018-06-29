@@ -94,7 +94,7 @@ int embed(Config::ArgumentList& opts)
 		if (dotIndex == std::string::npos) {
 			throw std::runtime_error("No extension provided.");
 		}
-		std::string extension(opts.GetInFilePath().substr());
+		std::string extension(opts.GetInFilePath().substr(dotIndex));
 		plainTextPlusSize << extension + '\0';
 	}
 	Crypto::Encoder encoder;
