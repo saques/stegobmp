@@ -47,6 +47,11 @@ int extract(Config::ArgumentList& opts)
 	std::string extension;
 	outString >> extension;
 	
+	auto dotIndex = extension.find_last_of(".");
+	if (dotIndex == std::string::npos) {
+		throw std::runtime_error("Extension read was invalid.");
+	}
+
 	// Create outputFile
 	std::ofstream outputFile(opts.GetOutFilePath() + extension, std::ios::binary);
 
@@ -85,7 +90,11 @@ int embed(Config::ArgumentList& opts)
 		plainTextPlusSize << plainText.rdbuf();
 
 		// Insert extension
-		std::string extension(opts.GetInFilePath().substr(opts.GetInFilePath().find_last_of(".")));
+		auto dotIndex = opts.GetInFilePath().find_last_of(".");
+		if (dotIndex == std::string::npos) {
+			throw std::runtime_error("No extension provided.");
+		}
+		std::string extension(opts.GetInFilePath().substr());
 		plainTextPlusSize << extension + '\0';
 	}
 	Crypto::Encoder encoder;
